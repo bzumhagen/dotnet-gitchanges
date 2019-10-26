@@ -12,11 +12,11 @@ namespace dotnet_gitchanges
         static void Main(string[] args)
         {
             var stubble = new StubbleBuilder().Build();
-            var versionsObj = new Versions();
             var template = Encoding.UTF8.GetString(Resource.KeepAChangelogTemplate);
             var v = new Versions();
-            v.Add(new GitChange("0.1.0", "Removed", "Did a thing", DateTime.Today));
-            v.Add(new GitChange("0.1.0", "Added", "Did another thing", DateTime.Today));
+            v.Add(new GitChange("0.1.0", "Removed", "Did a thing", DateTime.Today.AddDays(-2)));
+            v.Add(new GitChange("0.1.0", "Added", "Did another thing", DateTime.Today.AddDays(-1)));
+            v.Add(new GitChange("0.2.0", "Added", "Did another done thing earlier", DateTime.Today.AddDays(-1)));
             v.Add(new GitChange("0.2.0", "Added", "Did another done thing", DateTime.Today));
             var results = v.GetAsValueDictionary();
             var output = stubble.Render(template, results);
