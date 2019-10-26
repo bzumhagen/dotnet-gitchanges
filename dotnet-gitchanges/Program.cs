@@ -12,38 +12,16 @@ namespace dotnet_gitchanges
         static void Main(string[] args)
         {
             var stubble = new StubbleBuilder().Build();
-            List<Dictionary<string, string>> changes = new List<Dictionary<string, string>>()
-            {
-                new Dictionary<string, string>()
-                {
-                    {"summary", "This is a test"}
-                }
-            };
-            List<Dictionary<string, object>> tags = new List<Dictionary<string, object>>()
-            {
-                new Dictionary<string, object>()
-                {
-                    {"tag", "Added"},
-                    {"changes", changes}
-                }
-            };
-            List<Dictionary<string, object>> versions = new List<Dictionary<string, object>>()
-            {
-                new Dictionary<string, object>()
-                {
-                    {"version", "0.1.0"},
-                    {"date", "2019-10-24"},
-                    {"tags", tags}
-                }
-            };
-            Dictionary<string, object> versionsDict = new Dictionary<string, object>()
-            {
-                {"versions", versions}
-            };
-            
+            var versionsObj = new Versions();
             var template = Encoding.UTF8.GetString(Resource.KeepAChangelogTemplate);
-            var output = stubble.Render(template, versionsDict);
+            var v = new Versions();
+            v.Add(new GitChange("0.1.0", "Removed", "Did a thing", DateTime.Today));
+            v.Add(new GitChange("0.1.0", "Added", "Did another thing", DateTime.Today));
+            v.Add(new GitChange("0.2.0", "Added", "Did another done thing", DateTime.Today));
+            var results = v.GetAsValueDictionary();
+            var output = stubble.Render(template, results);
             File.WriteAllText(@"changelog.md", output);
+            
             /*using (var repo = new Repository("."))
             {
                 var RFC2822Format = "ddd dd MMM HH:mm:ss yyyy K";
