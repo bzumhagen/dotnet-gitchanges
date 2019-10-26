@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace dotnet_gitchanges
 {
-    public class Versions
+    public class ChangeCache : IChangeCache
     {
         public class ChangeKey
         {
@@ -40,7 +40,7 @@ namespace dotnet_gitchanges
             
         public Dictionary<ChangeKey, IList<IChange>> ChangeKeyToChanges { get; }
 
-        public Versions()
+        public ChangeCache()
         {
             ChangeKeyToChanges = new Dictionary<ChangeKey, IList<IChange>>();
         }
@@ -60,7 +60,7 @@ namespace dotnet_gitchanges
             foreach (var version in versionGroups.Keys.OrderByDescending(v => v))
             {
                 var tagToChanges = versionGroups[version];
-                var versionDate = DateTime.MinValue;
+                var versionDate = DateTimeOffset.MinValue;
                 var tagsList = new List<Dictionary<string, object>>();
                 foreach (var tag in tagToChanges.Keys.OrderBy(t => t))
                 {

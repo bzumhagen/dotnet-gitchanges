@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 
-namespace dotnet_gitchanges
+namespace dotnet_gitchanges.Tests.Caches
 {
-    public class VersionsTests
+    [TestFixture]
+    public class ChangeCacheTests
     {
 
         [Test]
@@ -17,16 +18,16 @@ namespace dotnet_gitchanges
                 new GitChange("0.1.0", "Added", "This is a change", today),
                 new GitChange("0.1.0", "Added", "This is another change", today)
             };
-            var expectedChangeKey = new Versions.ChangeKey(expectedChanges.First());
+            var expectedChangeKey = new ChangeCache.ChangeKey(expectedChanges.First());
             
-            var versions = new Versions();
+            var changeCache = new ChangeCache();
 
             foreach (var change in expectedChanges)
             {
-                versions.Add(change);
+                changeCache.Add(change);
             }
             
-            versions.ChangeKeyToChanges.TryGetValue(expectedChangeKey, out var actualChanges);
+            changeCache.ChangeKeyToChanges.TryGetValue(expectedChangeKey, out var actualChanges);
             
             Assert.That(actualChanges, Is.EquivalentTo(expectedChanges));
         }
@@ -37,20 +38,20 @@ namespace dotnet_gitchanges
             var today = DateTime.Today;
             var expectedChange1 = new GitChange("0.1.0", "Added", "This is a change", today);
             var expectedChange2 = new GitChange("0.1.0", "Removed", "This is a change", today);
-            var expectedChangeKey1 = new Versions.ChangeKey(expectedChange1);
-            var expectedChangeKey2 = new Versions.ChangeKey(expectedChange2);
+            var expectedChangeKey1 = new ChangeCache.ChangeKey(expectedChange1);
+            var expectedChangeKey2 = new ChangeCache.ChangeKey(expectedChange2);
             
-            var versions = new Versions();
+            var changeCache = new ChangeCache();
 
-            versions.Add(expectedChange1);
-            versions.Add(expectedChange2);
+            changeCache.Add(expectedChange1);
+            changeCache.Add(expectedChange2);
             
-            versions.ChangeKeyToChanges.TryGetValue(expectedChangeKey1, out var actualChanges1);
+            changeCache.ChangeKeyToChanges.TryGetValue(expectedChangeKey1, out var actualChanges1);
             
             CollectionAssert.Contains(actualChanges1, expectedChange1);
             CollectionAssert.DoesNotContain(actualChanges1, expectedChange2);
             
-            versions.ChangeKeyToChanges.TryGetValue(expectedChangeKey2, out var actualChanges2);
+            changeCache.ChangeKeyToChanges.TryGetValue(expectedChangeKey2, out var actualChanges2);
             
             CollectionAssert.Contains(actualChanges2, expectedChange2);
             CollectionAssert.DoesNotContain(actualChanges2, expectedChange1);
@@ -66,16 +67,16 @@ namespace dotnet_gitchanges
             var expectedChange5 = new GitChange("0.1.0", "Removed", "This is the middle 0.1.0", DateTime.Today.AddDays(-2));
             var expectedChange6 = new GitChange("0.1.0", "Removed", "This is the earliest 0.1.0", DateTime.Today.AddDays(-3));
             
-            var versions = new Versions();
+            var changeCache = new ChangeCache();
 
-            versions.Add(expectedChange1);
-            versions.Add(expectedChange2);
-            versions.Add(expectedChange3);
-            versions.Add(expectedChange4);
-            versions.Add(expectedChange5);
-            versions.Add(expectedChange6);
+            changeCache.Add(expectedChange1);
+            changeCache.Add(expectedChange2);
+            changeCache.Add(expectedChange3);
+            changeCache.Add(expectedChange4);
+            changeCache.Add(expectedChange5);
+            changeCache.Add(expectedChange6);
 
-            var actualValueDictionary = versions.GetAsValueDictionary();
+            var actualValueDictionary = changeCache.GetAsValueDictionary();
             var actualVersions = (List<Dictionary<string, object>>) actualValueDictionary["versions"];
             var version2 = actualVersions.Find(v => v.ContainsValue("0.2.0"));
             var version2Tags = (List<Dictionary<string, object>>) version2["tags"];
