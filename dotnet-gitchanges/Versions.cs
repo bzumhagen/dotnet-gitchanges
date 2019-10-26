@@ -57,14 +57,17 @@ namespace dotnet_gitchanges
                             .GroupBy(pair => pair.Key.Tag)
                             .ToDictionary(innerGroup => innerGroup.Key, innerGroup => innerGroup.SelectMany(pair => pair.Value))
                     );
-            foreach (var (version, tagGroups) in versionGroups)
+            foreach (var version in versionGroups.Keys.OrderByDescending(v => v))
             {
+                var tagToChanges = versionGroups[version];
                 var versionDate = DateTime.MinValue;
                 var tagsList = new List<Dictionary<string, object>>();
-                foreach (var (tag, changes) in tagGroups)
+                foreach (var tag in tagToChanges.Keys.OrderBy(t => t))
                 {
+                    var tagChanges = tagToChanges[tag];
                     var changesList = new List<Dictionary<string, object>>();
-                    foreach (var change in changes)
+                    
+                    foreach (var change in tagChanges.OrderByDescending (c => c.Date))
                     {
                         if (change.Date > versionDate) versionDate = change.Date;
                         
