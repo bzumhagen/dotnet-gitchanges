@@ -2,6 +2,6 @@
 {
     public interface IRepositoryReader
     {
-        Versions GetVersions();
+        void LoadCache();
     }
 }

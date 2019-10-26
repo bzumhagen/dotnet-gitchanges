@@ -7,7 +7,7 @@ namespace dotnet_gitchanges
         string Version { get; }
         string Tag { get; }
         string Summary { get; }
-        DateTime Date { get; }
+        DateTimeOffset Date { get; }
         string Reference { get; }
     }
 }
