@@ -2,6 +2,20 @@ language: csharp
 mono: none
 dotnet: 2.2.402
 solution: dotnet-gitchanges.sln
-script:
-  - dotnet restore
-  - dotnet test
+jobs:
+  include:
+    - stage: test
+      script:
+        - dotnet restore
+        - dotnet test
+    - stage: deploy
+      if: branch = master
+      script:
+        - set -e
+        - version=$(cat version.txt)
+        - dotnet pack -p:PackageVersion=$version
+        - cd dotnet-gitchanges/bin/Debug
+        - dotnet nuget push "dotnet_gitchanges.$version.nupkg" -k $NUGET_API_KEY -s https://api.nuget.org/v3/index.json
+branches:
+  only:
+    - master
