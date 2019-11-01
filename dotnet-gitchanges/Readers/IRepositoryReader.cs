@@ -1,7 +1,9 @@
-﻿namespace dotnet_gitchanges
+﻿using System.Collections.Generic;
+
+namespace dotnet_gitchanges
 {
     public interface IRepositoryReader
     {
-        void LoadCache();
+        IEnumerable<IChange> Changes();
     }
 }
