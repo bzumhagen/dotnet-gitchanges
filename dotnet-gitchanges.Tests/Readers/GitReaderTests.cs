@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using dotnet_gitchanges.Configuration;
 using LibGit2Sharp;
 using Moq;
 using NUnit.Framework;
@@ -13,35 +13,48 @@ namespace dotnet_gitchanges.Tests.Readers
         [Test]
         public void VerifyCacheIsLoadedFromRepository()
         {
-            var expectedChange = new GitChange("0.1.0", "Added", "Some Summary", DateTimeOffset.Now);
+            var patterns = new ParsingPatterns
+            {
+                Reference = "reference:(.*)[\n]?",
+                Version = "version:(.*)[\n]?",
+                Tag = "tag:(.*)[\n]?"
+            };
+            var expectedChanges = new List<IChange>
+            {
+                new GitChange("0.2.0", "Added", "Some Summary", DateTimeOffset.Now),
+                new GitChange("0.1.0", "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1))
+            };
             var repoMock = new Mock<IRepository>();
-            var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == FakeCommitLog(expectedChange));
-            var cacheMock = new Mock<IChangeCache>();
-            var reader = new GitReader(repoMock.Object, cacheMock.Object);
+            var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == MockCommitEnumerator(expectedChanges));
+            var reader = new GitReader(repoMock.Object, patterns);
 
             repoMock.Setup(r => r.Commits).Returns(commitLog);
-            cacheMock.Setup(c => c.Add(expectedChange));
             
-            reader.LoadCache();
-            
+            Assert.That(reader.Changes(), Is.EquivalentTo(expectedChanges));
             repoMock.VerifyAll();
-            cacheMock.VerifyAll();
         }
         
-        private static IEnumerator<Commit> FakeCommitLog(IChange expectedChange)
+        private static IEnumerator<Commit> MockCommitEnumerator(IEnumerable<IChange> expectedChanges)
         {
-            for (int i = 0; i < 1; i++)
+            foreach (var expectedChange in expectedChanges)
             {
-                yield return FakeCommit(expectedChange.Summary, expectedChange.Date);;
+                yield return MockCommit(expectedChange);
             }
         }
 
-        private static Commit FakeCommit(string messageShort, DateTimeOffset when)
+        private static Commit MockCommit(IChange change)
         {
             var commitMock = new Mock<Commit>();
-            var commitAuthor = new Signature("Some Author", "Some Email", when);
-            commitMock.SetupGet(x => x.MessageShort).Returns(messageShort);
+            var commitAuthor = new Signature("Some Author", "Some Email", change.Date);
+            var expectedMessage = $@"{change.Summary}
+
+reference: {change.Reference}
+version: {change.Version}
+tag: {change.Tag}
+";
+            commitMock.SetupGet(x => x.MessageShort).Returns(change.Summary);
             commitMock.SetupGet(x => x.Author).Returns(commitAuthor);
+            commitMock.SetupGet(x => x.Message).Returns(expectedMessage);
 
             return commitMock.Object;
         }
