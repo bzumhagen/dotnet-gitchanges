@@ -9,6 +9,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>gitchanges</ToolCommandName>
     <TargetFrameworks>netcoreapp2.1;netcoreapp2.2</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,10 +21,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="appsettings.json">
+    <Content Remove="KeepAChangelogTemplate.Mustache"/>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="KeepAChangelogTemplate.Mustache">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\KeepAChangelogTemplate.mustache">
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

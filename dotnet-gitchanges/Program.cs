@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Reflection;
 using System.Text;
 using dotnet_gitchanges.Configuration;
 using LibGit2Sharp;
@@ -18,8 +20,16 @@ namespace dotnet_gitchanges
             var patterns = config.GetSection("Parsing").Get<ParsingPatterns>();
             
             var stubble = new StubbleBuilder().Build();
-            var template = Encoding.UTF8.GetString(Resource.KeepAChangelogTemplate);
-            var repo = new Repository(".");
+            
+            var template = TryOrExit(() =>
+            {
+                var stream = Assembly.GetEntryAssembly()?.GetManifestResourceStream("dotnet_gitchanges.KeepAChangelogTemplate.Mustache");
+                using (var streamReader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    return streamReader.ReadToEnd();
+                }
+            }, "Failed to read template file");
+            var repo = TryOrExit(() => new Repository("."), "Failed to initialize repository");
             var cache = new ChangeCache();
             var reader = new GitReader(repo, patterns);
 
@@ -31,6 +41,21 @@ namespace dotnet_gitchanges
             var results = cache.GetAsValueDictionary();
             var output = stubble.Render(template, results);
             File.WriteAllText(@"changelog.md", output);
+        }
+
+        private static T TryOrExit<T>(Func<T> action, string failureMessage)
+        {
+            try
+            {
+                return action.Invoke();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"{failureMessage}: {e.Message}");
+                Environment.Exit(-1);
+            }
+
+            return default;
         }
     }
 }
