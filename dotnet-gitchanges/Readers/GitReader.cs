@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using dotnet_gitchanges.Configuration;
@@ -8,8 +9,10 @@ namespace dotnet_gitchanges
 {
     public class GitReader : IRepositoryReader
     {
+        private const string Unreleased = "Unreleased";
         private readonly IRepository _repository;
         private readonly ParsingPatterns _patterns;
+        private string _lastVersion = Unreleased;
         
         public GitReader(IRepository repository, ParsingPatterns patterns)
         {
@@ -26,6 +29,15 @@ namespace dotnet_gitchanges
                     var reference = GetMatchOrDefault(Regex.Match(commit.Message, _patterns.Reference));
                     var version = GetMatchOrDefault(Regex.Match(commit.Message, _patterns.Version));
                     var tag = GetMatchOrDefault(Regex.Match(commit.Message, _patterns.Tag));
+
+                    if (string.Equals(version, Unreleased, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        version = _lastVersion;
+                    }
+                    else
+                    {
+                        _lastVersion = version;
+                    }
                     
                     yield return new GitChange(version, tag, commit.MessageShort, commit.Author.When, reference);
                 }
