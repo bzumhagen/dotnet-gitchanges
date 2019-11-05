@@ -8,24 +8,36 @@ using Gitchanges.Readers;
 using LibGit2Sharp;
 using Microsoft.Extensions.Configuration;
 using Stubble.Core.Builders;
+using CommandLine;
 
 namespace Gitchanges
 {
     class Program
     {
+        public class Options
+        {
+            [Option('s', "settings", Required = false, HelpText = "Path to custom settings file.")]
+            public string CustomSettingsPath { get; set; }
+        }
+        
         static void Main(string[] args)
         {
-            var config = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json")
-                .Build();
-
+            var configBuilder = new ConfigurationBuilder().AddJsonFile("appsettings.json");
+            Parser.Default.ParseArguments<Options>(args)
+                .WithParsed(options =>
+                {
+                    if (!string.IsNullOrEmpty(options.CustomSettingsPath))
+                    {
+                        configBuilder.AddJsonFile(options.CustomSettingsPath);
+                    }
+                });
+            
+            var config = TryOrExit(() => configBuilder.Build(), "Failed to build configuration");
             var patterns = config.GetSection("Parsing").Get<ParsingPatterns>();
-            
             var stubble = new StubbleBuilder().Build();
-            
             var template = TryOrExit(() =>
             {
-                var stream = Assembly.GetEntryAssembly()?.GetManifestResourceStream("dotnet_gitchanges.KeepAChangelogTemplate.Mustache");
+                var stream = Assembly.GetEntryAssembly()?.GetManifestResourceStream("Gitchanges.KeepAChangelogTemplate.Mustache");
                 using (var streamReader = new StreamReader(stream, Encoding.UTF8))
                 {
                     return streamReader.ReadToEnd();

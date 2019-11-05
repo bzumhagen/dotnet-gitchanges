@@ -14,6 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.6.0" />
     <PackageReference Include="LibGit2Sharp" Version="0.26.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.0.0" />
@@ -22,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Remove="KeepAChangelogTemplate.Mustache"/>
+    <Content Remove="KeepAChangelogTemplate.Mustache" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="KeepAChangelogTemplate.Mustache">
