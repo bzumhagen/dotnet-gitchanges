@@ -34,10 +34,10 @@ namespace Gitchanges
             
             var config = TryOrExit(() => configBuilder.Build(), "Failed to build configuration");
             var patterns = config.GetSection("Parsing").Get<ParsingPatterns>();
-            var stubble = new StubbleBuilder().Build();
+            var templatePath = config.GetSection("Template").Value;
             var template = TryOrExit(() =>
             {
-                var stream = Assembly.GetEntryAssembly()?.GetManifestResourceStream("Gitchanges.KeepAChangelogTemplate.Mustache");
+                var stream = string.IsNullOrEmpty(templatePath) ? Assembly.GetEntryAssembly()?.GetManifestResourceStream("Gitchanges.KeepAChangelogTemplate.Mustache") : File.OpenRead(templatePath);
                 using (var streamReader = new StreamReader(stream, Encoding.UTF8))
                 {
                     return streamReader.ReadToEnd();
@@ -53,6 +53,7 @@ namespace Gitchanges
             }
 
             var results = cache.GetAsValueDictionary();
+            var stubble = new StubbleBuilder().Build();
             var output = stubble.Render(template, results);
             File.WriteAllText(@"changelog.md", output);
         }
