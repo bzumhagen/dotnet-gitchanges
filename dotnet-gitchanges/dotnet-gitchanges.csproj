@@ -2,12 +2,13 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <RootNamespace>dotnet_gitchanges</RootNamespace>
-    <PackageId>dotnet_gitchanges</PackageId>
+    <RootNamespace>Gitchanges</RootNamespace>
+    <PackageId>dotnet-gitchanges</PackageId>
     <Version>0.1.0</Version>
     <Authors>Benjamin Zumhagen</Authors>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>gitchanges</ToolCommandName>
+    <AssemblyName>gitchanges</AssemblyName>
     <TargetFrameworks>netcoreapp2.1;netcoreapp2.2</TargetFrameworks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>

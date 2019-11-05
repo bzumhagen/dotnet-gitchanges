@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Gitchanges.Caches;
+using Gitchanges.Changes;
 using NUnit.Framework;
 
-namespace dotnet_gitchanges.Tests.Caches
+namespace Gitchanges.Tests.Caches
 {
     [TestFixture]
     public class ChangeCacheTests

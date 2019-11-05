@@ -2,12 +2,14 @@
 using System.IO;
 using System.Reflection;
 using System.Text;
-using dotnet_gitchanges.Configuration;
+using Gitchanges.Caches;
+using Gitchanges.Configuration;
+using Gitchanges.Readers;
 using LibGit2Sharp;
 using Microsoft.Extensions.Configuration;
 using Stubble.Core.Builders;
 
-namespace dotnet_gitchanges
+namespace Gitchanges
 {
     class Program
     {

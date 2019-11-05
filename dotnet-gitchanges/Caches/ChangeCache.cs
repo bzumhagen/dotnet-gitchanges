@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Gitchanges.Changes;
 
-namespace dotnet_gitchanges
+namespace Gitchanges.Caches
 {
     public class ChangeCache : IChangeCache
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace dotnet_gitchanges
+namespace Gitchanges.Changes
 {
     public class GitChange : IChange
     {

@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using dotnet_gitchanges.Configuration;
+using Gitchanges.Changes;
+using Gitchanges.Configuration;
+using Gitchanges.Readers;
 using LibGit2Sharp;
 using Moq;
 using NUnit.Framework;
 
-namespace dotnet_gitchanges.Tests.Readers
+namespace Gitchanges.Tests.Readers
 {
     [TestFixture]
     public class GitReaderTests

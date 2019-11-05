@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using dotnet_gitchanges.Configuration;
+using Gitchanges.Changes;
+using Gitchanges.Configuration;
 using LibGit2Sharp;
 
-namespace dotnet_gitchanges
+namespace Gitchanges.Readers
 {
     public class GitReader : IRepositoryReader
     {

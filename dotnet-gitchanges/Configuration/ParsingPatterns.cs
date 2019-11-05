@@ -1,4 +1,4 @@
-﻿namespace dotnet_gitchanges.Configuration
+﻿namespace Gitchanges.Configuration
 {
     public class ParsingPatterns
     {
