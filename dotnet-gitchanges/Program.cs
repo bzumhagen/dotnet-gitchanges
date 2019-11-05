@@ -4,13 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using CommandLine;
 using Gitchanges.Caches;
 using Gitchanges.Configuration;
 using Gitchanges.Readers;
 using LibGit2Sharp;
 using Microsoft.Extensions.Configuration;
 using Stubble.Core.Builders;
-using CommandLine;
 
 namespace Gitchanges
 {
@@ -20,6 +20,10 @@ namespace Gitchanges
         {
             [Option('s', "settings", Required = false, HelpText = "Path to custom settings file.")]
             public string CustomSettingsPath { get; set; }
+            [Option('t', "template", Required = false, HelpText = "Path to custom template file. Overrides value specified in custom settings file.")]
+            public string CustomTemplatePath { get; set; }
+            [Option('e', "exclude", Required = false, HelpText = "Comma separated tags to exclude. Overrides value specified in custom settings file.")]
+            public string TagsToExclude { get; set; }
         }
         
         static void Main(string[] args)
@@ -28,10 +32,18 @@ namespace Gitchanges
             Parser.Default.ParseArguments<Options>(args)
                 .WithParsed(options =>
                 {
-                    if (!string.IsNullOrEmpty(options.CustomSettingsPath))
-                    {
+                    var additionalSettings = new List<KeyValuePair<string, string>>();
+
+                    if (!string.IsNullOrEmpty(options.CustomSettingsPath)) 
                         configBuilder.AddJsonFile(options.CustomSettingsPath);
-                    }
+
+                    if (!string.IsNullOrEmpty(options.CustomTemplatePath))
+                        additionalSettings.Add(new KeyValuePair<string, string>("Template", options.CustomTemplatePath));
+                    
+                    if (!string.IsNullOrEmpty(options.TagsToExclude))
+                        additionalSettings.Add(new KeyValuePair<string, string>("TagsToExclude", options.TagsToExclude));
+
+                    configBuilder.AddInMemoryCollection(additionalSettings);
                 });
             
             var config = TryOrExit(() => configBuilder.Build(), "Failed to build configuration");
@@ -41,7 +53,7 @@ namespace Gitchanges
             var repo = TryOrExit(() => new Repository("."), "Failed to initialize repository");
             var cache = new ChangeCache();
             var reader = new GitReader(repo, patterns);
-            var tagsToExclude = (config.GetSection("TagsToExclude").Get<HashSet<string>>() ?? new HashSet<string>()).Select(tag => tag.ToLower()).ToHashSet();
+            var tagsToExclude = (config.GetSection("TagsToExclude").Value ?? "").Split(",").Select(tag => tag.ToLower()).ToHashSet();
             
             foreach (var change in reader.Changes())
             {
