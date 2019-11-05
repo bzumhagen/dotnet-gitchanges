@@ -15,7 +15,7 @@ jobs:
         - version=$(cat version.txt)
         - dotnet pack -p:PackageVersion=$version
         - cd dotnet-gitchanges/bin/Debug
-        - dotnet nuget push "dotnet_gitchanges.$version.nupkg" -k $NUGET_API_KEY -s https://api.nuget.org/v3/index.json
+        - dotnet nuget push "dotnet-gitchanges.$version.nupkg" -k $NUGET_API_KEY -s https://api.nuget.org/v3/index.json
 branches:
   only:
     - master

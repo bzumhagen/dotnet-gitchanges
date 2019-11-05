@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Gitchanges.Caches;
@@ -39,10 +41,11 @@ namespace Gitchanges
             var repo = TryOrExit(() => new Repository("."), "Failed to initialize repository");
             var cache = new ChangeCache();
             var reader = new GitReader(repo, patterns);
-
+            var tagsToExclude = (config.GetSection("TagsToExclude").Get<HashSet<string>>() ?? new HashSet<string>()).Select(tag => tag.ToLower()).ToHashSet();
+            
             foreach (var change in reader.Changes())
             {
-                cache.Add(change);
+                if (!tagsToExclude.Contains(change.Tag.ToLower())) cache.Add(change);
             }
 
             var results = cache.GetAsValueDictionary();
