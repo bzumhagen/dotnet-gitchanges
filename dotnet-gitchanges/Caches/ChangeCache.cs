@@ -95,16 +95,19 @@ namespace Gitchanges.Caches
             return retVal;
         }
         
-        public void Add(IChange change)
+        public void Add(IEnumerable<IChange> changes)
         {
-            var changeKey = new ChangeKey(change);
-            if (ChangeKeyToChanges.TryGetValue(changeKey, out var changes))
+            foreach (var change in changes)
             {
-                changes.Add(change);
-            }
-            else
-            {
-                ChangeKeyToChanges.Add(changeKey, new List<IChange>{ change });
+                var changeKey = new ChangeKey(change);
+                if (ChangeKeyToChanges.TryGetValue(changeKey, out var existingChanges))
+                {
+                    existingChanges.Add(change);
+                }
+                else
+                {
+                    ChangeKeyToChanges.Add(changeKey, new List<IChange>{ change });
+                }
             }
         }
     }

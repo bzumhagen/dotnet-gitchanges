@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using CommandLine;
 using Gitchanges.Caches;
 using Gitchanges.Configuration;
+using Gitchanges.Enumerables;
 using Gitchanges.Readers;
 using LibGit2Sharp;
 using Microsoft.Extensions.Configuration;
@@ -24,6 +24,8 @@ namespace Gitchanges
             public string CustomTemplatePath { get; set; }
             [Option('e', "exclude", Required = false, HelpText = "Comma separated tags to exclude. Overrides value specified in custom settings file.")]
             public string TagsToExclude { get; set; }
+            [Option('m', "minVersion", Required = false, HelpText = "The minimum version of the changelog, will not include changes lower than this version. Overrides value specified in custom settings file.")]
+            public string MinVersion { get; set; }
         }
         
         static void Main(string[] args)
@@ -42,6 +44,9 @@ namespace Gitchanges
                     
                     if (!string.IsNullOrEmpty(options.TagsToExclude))
                         additionalSettings.Add(new KeyValuePair<string, string>("TagsToExclude", options.TagsToExclude));
+                    
+                    if (!string.IsNullOrEmpty(options.MinVersion))
+                        additionalSettings.Add(new KeyValuePair<string, string>("MinVersion", options.MinVersion));
 
                     configBuilder.AddInMemoryCollection(additionalSettings);
                 });
@@ -49,20 +54,21 @@ namespace Gitchanges
             var config = TryOrExit(() => configBuilder.Build(), "Failed to build configuration");
             var patterns = config.GetSection("Parsing").Get<ParsingPatterns>();
             var templatePath = config.GetSection("Template").Value;
+            var tagsToExclude = (config.GetSection("TagsToExclude").Value ?? "").Split(",");
+            var minVersion = config.GetSection("MinVersion").Value;
+            
             var template = GetTemplate(templatePath);
             var repo = TryOrExit(() => new Repository("."), "Failed to initialize repository");
             var cache = new ChangeCache();
             var reader = new GitReader(repo, patterns);
-            var tagsToExclude = (config.GetSection("TagsToExclude").Value ?? "").Split(",").Select(tag => tag.ToLower()).ToHashSet();
+            var filteredChanges = new FilteredChanges(reader.Changes(), minVersion, tagsToExclude);
             
-            foreach (var change in reader.Changes())
-            {
-                if (!tagsToExclude.Contains(change.Tag.ToLower())) cache.Add(change);
-            }
+            cache.Add(filteredChanges);
 
             var results = cache.GetAsValueDictionary();
             var stubble = new StubbleBuilder().Build();
             var output = stubble.Render(template, results);
+            
             File.WriteAllText(@"changelog.md", output);
         }
 

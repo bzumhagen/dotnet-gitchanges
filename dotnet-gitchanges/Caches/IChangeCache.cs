@@ -6,6 +6,6 @@ namespace Gitchanges.Caches
     public interface IChangeCache
     {
         Dictionary<string, object> GetAsValueDictionary();
-        void Add(IChange change);
+        void Add(IEnumerable<IChange> changes);
     }
 }

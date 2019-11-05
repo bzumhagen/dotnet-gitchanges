@@ -24,10 +24,7 @@ namespace Gitchanges.Tests.Caches
             
             var changeCache = new ChangeCache();
 
-            foreach (var change in expectedChanges)
-            {
-                changeCache.Add(change);
-            }
+            changeCache.Add(expectedChanges);
             
             changeCache.ChangeKeyToChanges.TryGetValue(expectedChangeKey, out var actualChanges);
             
@@ -45,8 +42,7 @@ namespace Gitchanges.Tests.Caches
             
             var changeCache = new ChangeCache();
 
-            changeCache.Add(expectedChange1);
-            changeCache.Add(expectedChange2);
+            changeCache.Add(new List<IChange> {expectedChange1, expectedChange2});
             
             changeCache.ChangeKeyToChanges.TryGetValue(expectedChangeKey1, out var actualChanges1);
             
@@ -71,12 +67,7 @@ namespace Gitchanges.Tests.Caches
             
             var changeCache = new ChangeCache();
 
-            changeCache.Add(expectedChange1);
-            changeCache.Add(expectedChange2);
-            changeCache.Add(expectedChange3);
-            changeCache.Add(expectedChange4);
-            changeCache.Add(expectedChange5);
-            changeCache.Add(expectedChange6);
+            changeCache.Add(new List<IChange> {expectedChange1, expectedChange2, expectedChange3, expectedChange4, expectedChange5,  expectedChange6});
 
             var actualValueDictionary = changeCache.GetAsValueDictionary();
             var actualVersions = (List<Dictionary<string, object>>) actualValueDictionary["versions"];
