@@ -35,14 +35,7 @@ namespace Gitchanges
             var config = TryOrExit(() => configBuilder.Build(), "Failed to build configuration");
             var patterns = config.GetSection("Parsing").Get<ParsingPatterns>();
             var templatePath = config.GetSection("Template").Value;
-            var template = TryOrExit(() =>
-            {
-                var stream = string.IsNullOrEmpty(templatePath) ? Assembly.GetEntryAssembly()?.GetManifestResourceStream("Gitchanges.KeepAChangelogTemplate.Mustache") : File.OpenRead(templatePath);
-                using (var streamReader = new StreamReader(stream, Encoding.UTF8))
-                {
-                    return streamReader.ReadToEnd();
-                }
-            }, "Failed to read template file");
+            var template = GetTemplate(templatePath);
             var repo = TryOrExit(() => new Repository("."), "Failed to initialize repository");
             var cache = new ChangeCache();
             var reader = new GitReader(repo, patterns);
@@ -56,6 +49,18 @@ namespace Gitchanges
             var stubble = new StubbleBuilder().Build();
             var output = stubble.Render(template, results);
             File.WriteAllText(@"changelog.md", output);
+        }
+
+        private static string GetTemplate(string templatePath)
+        {
+            return TryOrExit(() =>
+            {
+                var stream = string.IsNullOrEmpty(templatePath) ? Assembly.GetEntryAssembly()?.GetManifestResourceStream("Gitchanges.KeepAChangelogTemplate.Mustache") : File.OpenRead(templatePath);
+                using (var streamReader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    return streamReader.ReadToEnd();
+                }
+            }, "Failed to read template file");
         }
 
         private static T TryOrExit<T>(Func<T> action, string failureMessage)

@@ -74,7 +74,8 @@ namespace Gitchanges.Caches
                         
                         changesList.Add(new Dictionary<string, object>()
                         {
-                            {"summary", change.Summary}
+                            {"summary", change.Summary},
+                            {"reference", change.Reference}
                         });
                     }
                     tagsList.Add(new Dictionary<string, object>()
