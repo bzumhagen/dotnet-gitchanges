@@ -16,7 +16,7 @@ namespace Gitchanges
 {
     class Program
     {
-        public class Options
+        private class Options
         {
             [Option('s', "settings", Required = false, HelpText = "Path to custom settings file.")]
             public string CustomSettingsPath { get; set; }
@@ -26,6 +26,8 @@ namespace Gitchanges
             public string TagsToExclude { get; set; }
             [Option('m', "minVersion", Required = false, HelpText = "The minimum version of the changelog, will not include changes lower than this version. Overrides value specified in custom settings file.")]
             public string MinVersion { get; set; }
+            [Option('r', "repository", Required = false, HelpText = "Path to repository root. Defaults to execution directory. Overrides value specified in custom settings file.")]
+            public string RepositoryPath { get; set; }
         }
         
         static void Main(string[] args)
@@ -47,6 +49,9 @@ namespace Gitchanges
                     
                     if (!string.IsNullOrEmpty(options.MinVersion))
                         additionalSettings.Add(new KeyValuePair<string, string>("MinVersion", options.MinVersion));
+                    
+                    if (!string.IsNullOrEmpty(options.RepositoryPath))
+                        additionalSettings.Add(new KeyValuePair<string, string>("Repository", options.RepositoryPath));
 
                     configBuilder.AddInMemoryCollection(additionalSettings);
                 });
@@ -56,9 +61,10 @@ namespace Gitchanges
             var templatePath = config.GetSection("Template").Value;
             var tagsToExclude = (config.GetSection("TagsToExclude").Value ?? "").Split(",");
             var minVersion = config.GetSection("MinVersion").Value;
+            var repository = config.GetSection("Repository").Value;
             
             var template = GetTemplate(templatePath);
-            var repo = TryOrExit(() => new Repository("."), "Failed to initialize repository");
+            var repo = TryOrExit(() => new Repository(repository), "Failed to initialize repository");
             var cache = new ChangeCache();
             var reader = new GitReader(repo, patterns);
             var filteredChanges = new FilteredChanges(reader.Changes(), minVersion, tagsToExclude);
