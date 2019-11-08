@@ -30,6 +30,8 @@ namespace Gitchanges.Readers
                     var reference = GetMatchOrDefault(Regex.Match(commit.Message, _patterns.Reference));
                     var version = GetMatchOrDefault(Regex.Match(commit.Message, _patterns.Version));
                     var tag = GetMatchOrDefault(Regex.Match(commit.Message, _patterns.Tag));
+                    
+                    if (string.IsNullOrEmpty(version) || string.IsNullOrEmpty(tag)) continue;
 
                     if (string.Equals(version, Unreleased, StringComparison.CurrentCultureIgnoreCase))
                     {
