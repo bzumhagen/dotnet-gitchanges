@@ -28,54 +28,75 @@ namespace Gitchanges
             public string MinVersion { get; set; }
             [Option('r', "repository", Required = false, HelpText = "Path to repository root. Defaults to execution directory. Overrides value specified in custom settings file.")]
             public string RepositoryPath { get; set; }
+            [Option('f', "fileSource", Required = false, HelpText = "Path to file source. Overrides value specified in custom settings file.")]
+            public string FileSourcePath { get; set; }
         }
         
         static void Main(string[] args)
         {
-            var configBuilder = new ConfigurationBuilder().AddJsonFile("appsettings.json");
-            Parser.Default.ParseArguments<Options>(args)
-                .WithParsed(options =>
+            try
+            {
+                var configBuilder = new ConfigurationBuilder().AddJsonFile("appsettings.json");
+                Parser.Default.ParseArguments<Options>(args)
+                    .WithParsed(options =>
+                    {
+                        var additionalSettings = new List<KeyValuePair<string, string>>();
+
+                        if (!string.IsNullOrEmpty(options.CustomSettingsPath)) 
+                            configBuilder.AddJsonFile(options.CustomSettingsPath);
+
+                        if (!string.IsNullOrEmpty(options.CustomTemplatePath))
+                            additionalSettings.Add(new KeyValuePair<string, string>("Template", options.CustomTemplatePath));
+                        
+                        if (!string.IsNullOrEmpty(options.TagsToExclude))
+                            additionalSettings.Add(new KeyValuePair<string, string>("TagsToExclude", options.TagsToExclude));
+                        
+                        if (!string.IsNullOrEmpty(options.MinVersion))
+                            additionalSettings.Add(new KeyValuePair<string, string>("MinVersion", options.MinVersion));
+                        
+                        if (!string.IsNullOrEmpty(options.RepositoryPath))
+                            additionalSettings.Add(new KeyValuePair<string, string>("Repository", options.RepositoryPath));
+                        
+                        if (!string.IsNullOrEmpty(options.FileSourcePath))
+                            additionalSettings.Add(new KeyValuePair<string, string>("FileSource", options.FileSourcePath));
+
+                        configBuilder.AddInMemoryCollection(additionalSettings);
+                    });
+                
+                var config = TryOrExit(() => configBuilder.Build(), "Failed to build configuration");
+                var patterns = config.GetSection("Parsing").Get<ParsingPatterns>();
+                var templatePath = config.GetSection("Template").Value;
+                var tagsToExclude = (config.GetSection("TagsToExclude").Value ?? "").Split(",");
+                var minVersion = config.GetSection("MinVersion").Value;
+                var repository = config.GetSection("Repository").Value;
+                var fileSource = config.GetSection("FileSource").Value;
+                
+                var template = GetTemplate(templatePath);
+                var repo = TryOrExit(() => new Repository(repository), "Failed to initialize repository");
+                var cache = new ChangeCache();
+                var gitReader = new GitReader(repo, patterns);
+                var filteredRepositoryChanges = new FilteredChanges(gitReader.Changes(), minVersion, tagsToExclude);
+                
+                cache.Add(filteredRepositoryChanges);
+
+                if (!string.IsNullOrEmpty(fileSource))
                 {
-                    var additionalSettings = new List<KeyValuePair<string, string>>();
+                    var fileReader = new FileReader(fileSource, '|', Console.Error);
+                    var filteredFileChanges = new FilteredChanges(fileReader.Changes(), minVersion, tagsToExclude);
+                    cache.Add(filteredFileChanges);
+                }
 
-                    if (!string.IsNullOrEmpty(options.CustomSettingsPath)) 
-                        configBuilder.AddJsonFile(options.CustomSettingsPath);
-
-                    if (!string.IsNullOrEmpty(options.CustomTemplatePath))
-                        additionalSettings.Add(new KeyValuePair<string, string>("Template", options.CustomTemplatePath));
-                    
-                    if (!string.IsNullOrEmpty(options.TagsToExclude))
-                        additionalSettings.Add(new KeyValuePair<string, string>("TagsToExclude", options.TagsToExclude));
-                    
-                    if (!string.IsNullOrEmpty(options.MinVersion))
-                        additionalSettings.Add(new KeyValuePair<string, string>("MinVersion", options.MinVersion));
-                    
-                    if (!string.IsNullOrEmpty(options.RepositoryPath))
-                        additionalSettings.Add(new KeyValuePair<string, string>("Repository", options.RepositoryPath));
-
-                    configBuilder.AddInMemoryCollection(additionalSettings);
-                });
-            
-            var config = TryOrExit(() => configBuilder.Build(), "Failed to build configuration");
-            var patterns = config.GetSection("Parsing").Get<ParsingPatterns>();
-            var templatePath = config.GetSection("Template").Value;
-            var tagsToExclude = (config.GetSection("TagsToExclude").Value ?? "").Split(",");
-            var minVersion = config.GetSection("MinVersion").Value;
-            var repository = config.GetSection("Repository").Value;
-            
-            var template = GetTemplate(templatePath);
-            var repo = TryOrExit(() => new Repository(repository), "Failed to initialize repository");
-            var cache = new ChangeCache();
-            var reader = new GitReader(repo, patterns);
-            var filteredChanges = new FilteredChanges(reader.Changes(), minVersion, tagsToExclude);
-            
-            cache.Add(filteredChanges);
-
-            var results = cache.GetAsValueDictionary();
-            var stubble = new StubbleBuilder().Build();
-            var output = stubble.Render(template, results);
-            
-            File.WriteAllText(@"changelog.md", output);
+                var results = cache.GetAsValueDictionary();
+                var stubble = new StubbleBuilder().Build();
+                var output = stubble.Render(template, results);
+                
+                File.WriteAllText(@"changelog.md", output);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"{e.Message}");
+                Environment.Exit(-1);
+            }
         }
 
         private static string GetTemplate(string templatePath)

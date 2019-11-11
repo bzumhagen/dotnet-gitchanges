@@ -14,7 +14,7 @@ namespace Gitchanges.Tests.Readers
     public class GitReaderTests
     {
         [Test]
-        public void VerifyCacheIsLoadedFromRepository()
+        public void VerifyReaderReadsFromRepository()
         {
             var patterns = new ParsingPatterns
             {

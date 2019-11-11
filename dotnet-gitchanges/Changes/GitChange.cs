@@ -12,10 +12,10 @@ namespace Gitchanges.Changes
 
         public GitChange(string version, string tag, string summary, DateTimeOffset date, string reference = "")
         {
-            Version = version;
-            Tag = tag;
-            Summary = summary;
-            Date = date;
+            Version = EnsureNonEmpty(version, nameof(version));
+            Tag = EnsureNonEmpty(tag, nameof(tag));
+            Summary = EnsureNonEmpty(summary, nameof(summary));
+            Date = EnsureNonNull(date, nameof(date));
             Reference = reference;
         }
 
@@ -43,6 +43,18 @@ namespace Gitchanges.Changes
                 hashCode = (hashCode * 397) ^ (Reference != null ? Reference.GetHashCode() : 0);
                 return hashCode;
             }
+        }
+
+        private static T EnsureNonNull<T>(T obj, string name)
+        {
+            if (obj == null) throw new ArgumentException($"Parameter {name} cannot be null");
+            return obj;
+        }
+        
+        private static string EnsureNonEmpty(string value, string name)
+        {
+            if (string.IsNullOrEmpty(value)) throw new ArgumentException($"String parameter {name} cannot be null or empty.");
+            return value;
         }
     }
 }
