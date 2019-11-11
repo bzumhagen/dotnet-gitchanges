@@ -1,4 +1,6 @@
 # Gitchanges CLI Tool
+![Nuget](https://img.shields.io/nuget/v/dotnet-gitchanges)
+[![Build Status](https://travis-ci.com/bzumhagen/dotnet-gitchanges.svg?branch=master)](https://travis-ci.com/bzumhagen/dotnet-gitchanges)
 
 Simple CLI Tool for generating changelogs from git history.
 
