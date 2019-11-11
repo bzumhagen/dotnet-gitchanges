@@ -68,11 +68,23 @@ See `dotnet-gitchanges\appsettings.json` for the default settings file. Any sett
         "Version": "version:(.*)[\n]?",
         "Tag": "tag:(.*)[\n]?"
     },
-    "Template": "",
-    "TagsToExclude": "",
-    "MinVersion": "",
-    "Repository": ".",
-    "FileSource": ""
+    "Template": "someCustomTemplate.mustache",
+    "TagsToExclude": "Maintenance",
+    "MinVersion": "0.1.0",
+    "Repository": {
+      "Path": ".",
+      ChangeOverrides": [
+        {
+            "Id": "03c5f2382c23e5437027d0c811d9d6da9d92f6f9",
+            "Version": "0.4.1",
+            "Tag": "Removed",
+            "Summary": "Replace this thing",
+            "Date": "2019-01-10",
+            "Reference": "REF-1234"
+        }
+      ]
+    },
+    "FileSource": "someHistorialChanges.txt"
 }
 ```
 ***Descriptions***
@@ -84,7 +96,8 @@ See `dotnet-gitchanges\appsettings.json` for the default settings file. Any sett
 | Parsing.Reference | Regex for extracting the tag from the commit message.
 | Template | Path to custom template file.
 | MinVersion | The minimum version of the changelog, generation will exclude changes lower than this version.
-| Repository | Path to repository root.
+| Repository.Path | Path to repository root.
+| Repository.ChangeOverrides | Collection of Change Overrides. Add an entry for every commit you want to override with custom values at generation time where Id is the commit Id.
 | FileSource | Path to file source (see [Including historical changes](#including-historical-changes)).
 
 #### Custom Template

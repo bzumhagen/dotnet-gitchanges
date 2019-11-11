@@ -45,6 +45,11 @@ namespace Gitchanges.Changes
             }
         }
 
+        public override string ToString()
+        {
+            return $"GitChange {{ Version: {Version}, Tag: {Tag}, Summary: {Summary}, Date: {Date:yyyy-MM-dd}, Reference: {Reference} }}";
+        }
+
         private static T EnsureNonNull<T>(T obj, string name)
         {
             if (obj == null) throw new ArgumentException($"Parameter {name} cannot be null");

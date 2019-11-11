@@ -27,24 +27,44 @@ namespace Gitchanges.Readers
             {
                 foreach (var commit in repo.Commits.AsEnumerable())
                 {
-                    var reference = GetMatchOrDefault(Regex.Match(commit.Message, _patterns.Reference));
-                    var version = GetMatchOrDefault(Regex.Match(commit.Message, _patterns.Version));
-                    var tag = GetMatchOrDefault(Regex.Match(commit.Message, _patterns.Tag));
-                    
-                    if (string.IsNullOrEmpty(version) || string.IsNullOrEmpty(tag)) continue;
-
-                    if (string.Equals(version, Unreleased, StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        version = _lastVersion;
-                    }
-                    else
-                    {
-                        _lastVersion = version;
-                    }
-                    
-                    yield return new GitChange(version, tag, commit.MessageShort, commit.Author.When, reference);
+                    var change = Parse(commit);
+                    if (change == null) continue;
+                    yield return change;
                 }
             }
+        }
+        
+        public IEnumerable<IChange> Changes(Dictionary<string, IChange> overrides)
+        {
+            using (var repo = _repository)
+            {
+                foreach (var commit in repo.Commits.AsEnumerable())
+                {
+                    IChange change = overrides.TryGetValue(commit.Id.ToString(), out var overrideChange) ? overrideChange : Parse(commit);
+                    
+                    if (change == null) continue;
+                    yield return change;
+                }
+            }
+        }
+
+        private IChange Parse(Commit commit)
+        {
+            var reference = GetMatchOrDefault(Regex.Match(commit.Message, _patterns.Reference));
+            var version = GetMatchOrDefault(Regex.Match(commit.Message, _patterns.Version));
+            var tag = GetMatchOrDefault(Regex.Match(commit.Message, _patterns.Tag));
+                    
+            if (string.IsNullOrEmpty(version) || string.IsNullOrEmpty(tag)) return null;
+
+            if (string.Equals(version, Unreleased, StringComparison.CurrentCultureIgnoreCase))
+            {
+                version = _lastVersion;
+            }
+            else
+            {
+                _lastVersion = version;
+            }
+            return new GitChange(version, tag, commit.MessageShort, commit.Author.When, reference);
         }
 
         private static string GetMatchOrDefault(Match match)

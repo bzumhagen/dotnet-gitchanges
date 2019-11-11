@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using CommandLine;
 using Gitchanges.Caches;
+using Gitchanges.Changes;
 using Gitchanges.Configuration;
 using Gitchanges.Enumerables;
 using Gitchanges.Readers;
@@ -55,7 +57,7 @@ namespace Gitchanges
                             additionalSettings.Add(new KeyValuePair<string, string>("MinVersion", options.MinVersion));
                         
                         if (!string.IsNullOrEmpty(options.RepositoryPath))
-                            additionalSettings.Add(new KeyValuePair<string, string>("Repository", options.RepositoryPath));
+                            additionalSettings.Add(new KeyValuePair<string, string>("Repository:Path", options.RepositoryPath));
                         
                         if (!string.IsNullOrEmpty(options.FileSourcePath))
                             additionalSettings.Add(new KeyValuePair<string, string>("FileSource", options.FileSourcePath));
@@ -68,14 +70,15 @@ namespace Gitchanges
                 var templatePath = config.GetSection("Template").Value;
                 var tagsToExclude = (config.GetSection("TagsToExclude").Value ?? "").Split(",");
                 var minVersion = config.GetSection("MinVersion").Value;
-                var repository = config.GetSection("Repository").Value;
+                var repositoryConfig = config.GetSection("Repository").Get<RepositoryConfig>();
                 var fileSource = config.GetSection("FileSource").Value;
                 
                 var template = GetTemplate(templatePath);
-                var repo = TryOrExit(() => new Repository(repository), "Failed to initialize repository");
+                var repo = TryOrExit(() => new Repository(repositoryConfig.Path), "Failed to initialize repository");
                 var cache = new ChangeCache();
                 var gitReader = new GitReader(repo, patterns);
-                var filteredRepositoryChanges = new FilteredChanges(gitReader.Changes(), minVersion, tagsToExclude);
+                var gitChanges = (repositoryConfig.ChangeOverrides ?? new List<RepositoryConfig.ChangeOverride>()).Any() ? gitReader.Changes(ToDictionary(repositoryConfig.ChangeOverrides)) : gitReader.Changes();
+                var filteredRepositoryChanges = new FilteredChanges(gitChanges, minVersion, tagsToExclude);
                 
                 cache.Add(filteredRepositoryChanges);
 
@@ -124,6 +127,18 @@ namespace Gitchanges
             }
 
             return default;
+        }
+
+        private static Dictionary<string, IChange> ToDictionary(IEnumerable<RepositoryConfig.ChangeOverride> changeOverrides)
+        {
+            var idToChange = new Dictionary<string, IChange>();
+            foreach (var changeOverride in changeOverrides)
+            {
+                var change = new GitChange(changeOverride.Version, changeOverride.Tag, changeOverride.Summary, changeOverride.Date, changeOverride.Reference ?? "");
+                idToChange.Add(changeOverride.Id, change);
+            }
+
+            return idToChange;
         }
     }
 }
