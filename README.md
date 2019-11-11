@@ -20,7 +20,7 @@ Write commit messages in the following format, or specify a custom format in a c
 <body>[Optional]
 
 tag: <my-tag>
-version: <my-version>
+version: <my-version or Unreleased>
 reference: <my-ref>[Optional]
 ```
 ### Including historical changes
@@ -33,6 +33,10 @@ The file should have one change per line in one of the following formats
  or
 
 `<reference>|<version>|<tag>|<summary>|<date in yyyy-MM-dd>`
+
+### Handling unreleased changes
+For changes which are not going to be immediately released you can simply use `Unreleased` as the version. Once you add a commit with a release version, the `Unreleased` commits directly preceding it will be grouped underneath the relevant release version.
+
 
 ## Usage
 ### Basic
