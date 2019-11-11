@@ -17,12 +17,22 @@ Write commit messages in the following format, or specify a custom format in a c
 ```
 <summary>
 
-<body>
+<body>[Optional]
 
 tag: <my-tag>
 version: <my-version>
 reference: <my-ref>[Optional]
 ```
+### Including historical changes
+If you have historical changes that you want to include, you can write them into a fileSource and pass it into the generator on execution (see [optional parameters](#optional-parameters)).
+
+The file should have one change per line in one of the following formats
+
+`<version>|<tag>|<summary>|<date in yyyy-MM-dd format>`
+
+ or
+
+`<reference>|<version>|<tag>|<summary>|<date in yyyy-MM-dd>`
 
 ## Usage
 ### Basic
@@ -41,6 +51,7 @@ Run the previous command with any combination of the following optional paramete
 |exclude| `Maintenance,Fixed` | Comma separated tags to exclude. Overrides value specified in custom settings file.
 |minVersion| `0.1.0` | The minimum version of the changelog, will not include changes lower than this version. Overrides value specified in custom settings file.
 |repository| `path\to\repository` | Path to repository root. Defaults to execution directory. Overrides value specified in custom settings file.
+|fileSource| `path\to\fileSource` | Path to file source. Overrides value specified in custom settings file.
 
 #### Custom App Settings
 See `dotnet-gitchanges\appsettings.json` for the default settings file. Any settings not set in your custom app settings file will default to the values in the default file.
@@ -56,7 +67,8 @@ See `dotnet-gitchanges\appsettings.json` for the default settings file. Any sett
     "Template": "",
     "TagsToExclude": "",
     "MinVersion": "",
-    "Repository": "."
+    "Repository": ".",
+    "FileSource": ""
 }
 ```
 ***Descriptions***
@@ -67,8 +79,9 @@ See `dotnet-gitchanges\appsettings.json` for the default settings file. Any sett
 | Parsing.Version | Regex for extracting the version from the commit message.
 | Parsing.Reference | Regex for extracting the tag from the commit message.
 | Template | Path to custom template file.
-| MinVersion | The minimum version of the changelog, will not include changes lower than this version.
+| MinVersion | The minimum version of the changelog, generation will exclude changes lower than this version.
 | Repository | Path to repository root.
+| FileSource | Path to file source (see [Including historical changes](#including-historical-changes)).
 
 #### Custom Template
 Currently the only supported templating syntax supported is [Mustache](http://mustache.github.io/mustache.5.html). See `dotnet-gitchanges\KeepAChangelogTemplate.Mustache` for the default template file.
