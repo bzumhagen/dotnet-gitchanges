@@ -10,6 +10,7 @@ using Gitchanges.Changes;
 using Gitchanges.Configuration;
 using Gitchanges.Enumerables;
 using Gitchanges.Readers;
+using Gitchanges.Readers.Parsers;
 using LibGit2Sharp;
 using Microsoft.Extensions.Configuration;
 using Stubble.Core.Builders;
@@ -77,17 +78,24 @@ namespace Gitchanges
                 var repo = TryOrExit(() => new Repository(repositoryConfig.Path), "Failed to initialize repository");
                 var cache = new ChangeCache();
                 var gitReader = new GitReader(repo, patterns);
-                var gitChanges = (repositoryConfig.ChangeOverrides ?? new List<RepositoryConfig.ChangeOverride>()).Any() ? gitReader.Changes(ToDictionary(repositoryConfig.ChangeOverrides)) : gitReader.Changes();
+                var idToOverrideChange = new Dictionary<string, IChange>();
+                
+                if (!string.IsNullOrEmpty(fileSource))
+                {
+                    var fileReader = new FileReader<IChange>(fileSource, new FileSourceRowParser(Console.Error));
+                    var filteredFileChanges = new FilteredChanges(fileReader.Values(), minVersion, tagsToExclude);
+                    cache.Add(filteredFileChanges);
+                }
+                if (!string.IsNullOrEmpty(repositoryConfig.OverrideSource))
+                {
+                    var overrideFileReader = new FileReader<OverrideChange>(repositoryConfig.OverrideSource, new OverrideSourceRowParser(Console.Error));
+                    idToOverrideChange = overrideFileReader.Values().ToDictionary<OverrideChange, string, IChange>(change => change.Id, change => change);
+                }
+                
+                var gitChanges = idToOverrideChange.Any() ? gitReader.Changes(idToOverrideChange) : gitReader.Changes();
                 var filteredRepositoryChanges = new FilteredChanges(gitChanges, minVersion, tagsToExclude);
                 
                 cache.Add(filteredRepositoryChanges);
-
-                if (!string.IsNullOrEmpty(fileSource))
-                {
-                    var fileReader = new FileReader(fileSource, '|', Console.Error);
-                    var filteredFileChanges = new FilteredChanges(fileReader.Changes(), minVersion, tagsToExclude);
-                    cache.Add(filteredFileChanges);
-                }
 
                 var results = cache.GetAsValueDictionary();
                 var stubble = new StubbleBuilder().Build();
@@ -127,18 +135,6 @@ namespace Gitchanges
             }
 
             return default;
-        }
-
-        private static Dictionary<string, IChange> ToDictionary(IEnumerable<RepositoryConfig.ChangeOverride> changeOverrides)
-        {
-            var idToChange = new Dictionary<string, IChange>();
-            foreach (var changeOverride in changeOverrides)
-            {
-                var change = new GitChange(changeOverride.Version, changeOverride.Tag, changeOverride.Summary, changeOverride.Date, changeOverride.Reference ?? "");
-                idToChange.Add(changeOverride.Id, change);
-            }
-
-            return idToChange;
         }
     }
 }

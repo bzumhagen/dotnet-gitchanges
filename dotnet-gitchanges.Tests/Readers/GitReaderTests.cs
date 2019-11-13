@@ -144,6 +144,37 @@ namespace Gitchanges.Tests.Readers
             repoMock.VerifyAll();
         }
         
+        [Test]
+        public void VerifyOverriddenChangeVersionsAreUsedForPrecedingUnreleasedVersions()
+        {
+            var overriddenChange = new GitChange("0.2.0", "Added", "Some Summary", DateTimeOffset.Now.Date);
+            var overrideChange = new GitChange(overriddenChange.Version, overriddenChange.Tag, "Some other summary", overriddenChange.Date);
+            var unreleasedChange = new GitChange("Unreleased", overriddenChange.Tag, overriddenChange.Summary, overriddenChange.Date);
+            var badChangeId = ToSha1String(overriddenChange);
+            var idToOverrideChange = new Dictionary<string, IChange>
+            {
+                {badChangeId, overrideChange}
+            };
+            var repositoryChanges = new List<IChange>
+            {
+                overriddenChange,
+                unreleasedChange
+            };
+            var expectedChanges = new List<IChange>
+            {
+                overrideChange,
+                new GitChange(overrideChange.Version, unreleasedChange.Tag, unreleasedChange.Summary, unreleasedChange.Date)
+            };
+            var repoMock = new Mock<IRepository>();
+            var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == MockCommitEnumerator(repositoryChanges));
+            var reader = new GitReader(repoMock.Object, _defaultPatterns);
+
+            repoMock.Setup(r => r.Commits).Returns(commitLog);
+            var actualChanges = reader.Changes(idToOverrideChange).ToList();
+            Assert.That(actualChanges, Is.EquivalentTo(expectedChanges));
+            repoMock.VerifyAll();
+        }
+        
         private static IEnumerator<Commit> MockCommitEnumerator(IEnumerable<IChange> expectedChanges)
         {
             return expectedChanges.Select(MockCommit).GetEnumerator();

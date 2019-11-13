@@ -4,9 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Gitchanges.Changes;
-using Gitchanges.Configuration;
 using Gitchanges.Readers;
-using LibGit2Sharp;
+using Gitchanges.Readers.Parsers;
 using Moq;
 using NUnit.Framework;
 
@@ -19,7 +18,7 @@ namespace Gitchanges.Tests.Readers
         private const string DateFormat = "yyyy-MM-dd";
         
         [Test]
-        public void VerifyReaderReadsFromFileWithoutReference()
+        public void VerifyReaderReadsFromFile()
         {
             var fileContents = new StringBuilder();
             var expectedChanges = new List<IChange>
@@ -27,64 +26,48 @@ namespace Gitchanges.Tests.Readers
                 new GitChange("0.2.0", "Added", "Some Summary", DateTimeOffset.Now.Date),
                 new GitChange("0.1.0", "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1).Date)
             };
+            var mockParser = new Mock<IRowParser<IChange>>();
             foreach (var change in expectedChanges)
             {
-                fileContents.Append($"{change.Version}{Delimiter}{change.Tag}{Delimiter}{change.Summary}{Delimiter}{change.Date.ToString(DateFormat)}\n");
+                var line = $"{change.Version}{Delimiter}{change.Tag}{Delimiter}{change.Summary}{Delimiter}{change.Date.ToString(DateFormat)}\n";
+                mockParser.Setup(p => p.Parse(line.Trim())).Returns(change);
+                fileContents.Append(line);
             }
             UsingTempFile(fileContents.ToString(), path =>
             {
-                var reader = new FileReader(path, Delimiter, null);
+                var reader = new FileReader<IChange>(path, mockParser.Object);
             
-                Assert.That(reader.Changes(), Is.EquivalentTo(expectedChanges));
+                Assert.That(reader.Values(), Is.EquivalentTo(expectedChanges));
             });
         }
         
         [Test]
-        public void VerifyReaderReadsFromFileWithReference()
+        public void VerifyReaderReadsFromFileSkippingUnparseableRecords()
         {
-            var fileContents = new StringBuilder();
-            var expectedChanges = new List<IChange>
-            {
-                new GitChange("0.2.0", "Added", "Some Summary", DateTimeOffset.Now.Date, "REF-1234"),
-                new GitChange("0.1.0", "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1).Date, "REF-5678")
-            };
-            foreach (var change in expectedChanges)
-            {
-                fileContents.Append($"{change.Reference}{Delimiter}{change.Version}{Delimiter}{change.Tag}{Delimiter}{change.Summary}{Delimiter}{change.Date.ToString(DateFormat)}\n");
-            }
-            UsingTempFile(fileContents.ToString(), path =>
-            {
-                var reader = new FileReader(path, Delimiter, null);
-            
-                Assert.That(reader.Changes(), Is.EquivalentTo(expectedChanges));
-            });
-        }
-        
-        [Test]
-        public void VerifyReaderSkipsUnparseableRecords()
-        {
-            var errorWriter = new StringWriter();
             var fileContents = new StringBuilder();
             var allChanges = new List<IChange>
             {
-                new GitChange("|0.2.0", "Added", "Some Summary", DateTimeOffset.Now.Date, "REF-1234"),
-                new GitChange("0.1.5", "Added|", "Some Summary", DateTimeOffset.Now.Date, "REF-1234"),
-                new GitChange("0.1.0", "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1).Date, "REF-5678")
+                new GitChange("0.2.0", "Added", "Some Summary", DateTimeOffset.Now.Date),
+                new GitChange("0.1.0", "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1).Date)
             };
             var expectedChanges = new List<IChange>
             {
-                new GitChange("0.1.0", "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1).Date, "REF-5678")
+                allChanges.First()
             };
+            var mockParser = new Mock<IRowParser<IChange>>();
+            mockParser.SetupSequence(p => p.Parse(It.IsAny<string>())).Returns((IChange)null).Returns(expectedChanges.First());
+            
             foreach (var change in allChanges)
             {
-                fileContents.Append($"{change.Reference}{Delimiter}{change.Version}{Delimiter}{change.Tag}{Delimiter}{change.Summary}{Delimiter}{change.Date.ToString(DateFormat)}\n");
+                var line = $"{change?.Version}{Delimiter}{change?.Tag}{Delimiter}{change?.Summary}{Delimiter}{change?.Date.ToString(DateFormat)}\n";
+                fileContents.Append(line);
             }
+            
             UsingTempFile(fileContents.ToString(), path =>
             {
-                var reader = new FileReader(path, Delimiter, errorWriter);
+                var reader = new FileReader<IChange>(path, mockParser.Object);
             
-                Assert.That(reader.Changes(), Is.EquivalentTo(expectedChanges));
-                Assert.That(errorWriter.ToString().Split("\n").Length, Is.EqualTo(3));
+                Assert.That(reader.Values(), Is.EquivalentTo(expectedChanges));
             });
         }
         

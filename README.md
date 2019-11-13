@@ -76,16 +76,7 @@ See `dotnet-gitchanges\appsettings.json` for the default settings file. Any sett
     "MinVersion": "0.1.0",
     "Repository": {
       "Path": ".",
-      ChangeOverrides": [
-        {
-            "Id": "03c5f2382c23e5437027d0c811d9d6da9d92f6f9",
-            "Version": "0.4.1",
-            "Tag": "Removed",
-            "Summary": "Replace this thing",
-            "Date": "2019-01-10",
-            "Reference": "REF-1234"
-        }
-      ]
+      "OverrideSource": "someOverrideSource.txt"
     },
     "FileSource": "someHistorialChanges.txt"
 }
@@ -100,7 +91,7 @@ See `dotnet-gitchanges\appsettings.json` for the default settings file. Any sett
 | Template | Path to custom template file.
 | MinVersion | The minimum version of the changelog, generation will exclude changes lower than this version.
 | Repository.Path | Path to repository root.
-| Repository.ChangeOverrides | Collection of Change Overrides. Add an entry for every commit you want to override with custom values at generation time where Id is the commit Id.
+| Repository.OverrideSource | Path to override source (see [Overriding repository changes](#overriding-repository-changes))
 | FileSource | Path to file source (see [Existing repository](#existing-repository)).
 
 #### Custom Template
@@ -116,6 +107,17 @@ The schema available for you to use in your custom templates is detailed below.
 ----+---+-- changes // Collection of tag changes\
 ----+---+---+-- reference // Change reference value\
 ----+---+---+-- summary // Change summary
+
+#### Overriding Repository Changes
+In some cases, you may decide that you want to override a commit which exists in the repository history without having to rewrite the history. In this case you can provide an override source file in a [custom settings file](#custom-app-settings).
+
+The file should have one change per line in one of the following formats
+
+`<commitId>|<version>|<tag>|<summary>|<date in yyyy-MM-dd format>`
+
+ or
+
+`<commitId>|<reference>|<version>|<tag>|<summary>|<date in yyyy-MM-dd>`
 
 #### Git helpers
 See `git\.gitmessage` and `git\hooks\prepare-commit-msg` for examples of how to use git hooks and message templates to construct messages in the desired format, automatically populating metadata where possible.

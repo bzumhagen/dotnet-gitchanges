@@ -33,5 +33,10 @@ if [[ $staged_files == *"version.txt"* ]]; then
   read -r version<"version.txt"
 fi
 
+# If version is unreleased we only want to replace version if it is unset
+if [[ "$version" == "Unreleased" ]]; then
+  version_regex="^version:[\s]*$"
+fi
+
 # Look for a version section of the commit message and put the version there
 sed -i "s/$version_regex/version: $version/" $1

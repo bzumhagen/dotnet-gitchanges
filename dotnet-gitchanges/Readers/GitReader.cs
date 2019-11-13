@@ -40,7 +40,16 @@ namespace Gitchanges.Readers
             {
                 foreach (var commit in repo.Commits.AsEnumerable())
                 {
-                    IChange change = overrides.TryGetValue(commit.Id.ToString(), out var overrideChange) ? overrideChange : Parse(commit);
+                    IChange change;
+                    if (overrides.TryGetValue(commit.Id.ToString(), out var overrideChange))
+                    {
+                        var version = HandleVersion(overrideChange.Version);
+                        change = new GitChange(version, overrideChange.Tag, overrideChange.Summary, overrideChange.Date, overrideChange.Reference);
+                    }
+                    else
+                    {
+                        change = Parse(commit);
+                    }
                     
                     if (change == null) continue;
                     yield return change;
@@ -56,6 +65,18 @@ namespace Gitchanges.Readers
                     
             if (string.IsNullOrEmpty(version) || string.IsNullOrEmpty(tag)) return null;
 
+            version = HandleVersion(version);
+            
+            return new GitChange(version, tag, commit.MessageShort, commit.Author.When, reference);
+        }
+
+        private static string GetMatchOrDefault(Match match)
+        {
+            return match.Success ? match.Groups[1].Value.Trim() : "";
+        }
+
+        private string HandleVersion(string version)
+        {
             if (string.Equals(version, Unreleased, StringComparison.CurrentCultureIgnoreCase))
             {
                 version = _lastVersion;
@@ -64,12 +85,9 @@ namespace Gitchanges.Readers
             {
                 _lastVersion = version;
             }
-            return new GitChange(version, tag, commit.MessageShort, commit.Author.When, reference);
-        }
 
-        private static string GetMatchOrDefault(Match match)
-        {
-            return match.Success ? match.Groups[1].Value.Trim() : "";
+            return version;
         }
+        
     }
 }
