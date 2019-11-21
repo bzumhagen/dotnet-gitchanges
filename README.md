@@ -25,9 +25,11 @@ Write commit messages in the following format, or specify a custom format in a c
 tag: <my-tag>
 version: <my-version or Unreleased>
 reference: <my-ref>[Optional]
+project: <my-project>[Required when MultiProject = true]
 ```
 For changes which are not going to be immediately released you should use `Unreleased` as the version. Once you add a commit with a release version, the `Unreleased` commits directly preceding it will be grouped underneath the relevant release version.
 
+For a multi project repository, include the `project: <my-project>` section as well.
 ### Existing repository
 Write all future commit messages in the format [listed above](#new-repository).
 
@@ -40,6 +42,10 @@ The file should have one change per line in one of the following formats
  or
 
 `<reference>|<version>|<tag>|<summary>|<date in yyyy-MM-dd>`
+
+ or for multi project repositories
+
+`<project>|<reference>|<version>|<tag>|<summary>|<date in yyyy-MM-dd>`
 
 ## Usage
 ### Basic
@@ -78,7 +84,8 @@ See `dotnet-gitchanges\appsettings.json` for the default settings file. Any sett
       "Path": ".",
       "OverrideSource": "someOverrideSource.txt"
     },
-    "FileSource": "someHistorialChanges.txt"
+    "FileSource": "someHistorialChanges.txt",
+    "MultiProject": false
 }
 ```
 ***Descriptions***
@@ -93,6 +100,7 @@ See `dotnet-gitchanges\appsettings.json` for the default settings file. Any sett
 | Repository.Path | Path to repository root.
 | Repository.OverrideSource | Path to override source (see [Overriding repository changes](#overriding-repository-changes))
 | FileSource | Path to file source (see [Existing repository](#existing-repository)).
+| MultiProject | Specifies whether repository should be processed as a multi project repository.
 
 #### Custom Template
 Currently the only supported templating syntax supported is [Mustache](http://mustache.github.io/mustache.5.html). See `dotnet-gitchanges\KeepAChangelogTemplate.Mustache` for the default template file.
@@ -118,6 +126,13 @@ The file should have one change per line in one of the following formats
  or
 
 `<commitId>|<reference>|<version>|<tag>|<summary>|<date in yyyy-MM-dd>`
+
+or for multi project repositories
+
+`<commitId>|<project>|<reference>|<version>|<tag>|<summary>|<date in yyyy-MM-dd>`
+
+#### Multi Project Repository
+In some cases, you may have multiple projects in the same repository which all need to have their own changelogs. This use case is now supported by passing in a custom settings file with the MultiProject flag set to true. A changelog per project will be created based on the project information specified in the commit messages.
 
 #### Git helpers
 See `git\.gitmessage` and `git\hooks\prepare-commit-msg` for examples of how to use git hooks and message templates to construct messages in the desired format, automatically populating metadata where possible.

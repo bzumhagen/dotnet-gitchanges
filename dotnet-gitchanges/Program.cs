@@ -67,41 +67,76 @@ namespace Gitchanges
                     });
                 
                 var config = TryOrExit(() => configBuilder.Build(), "Failed to build configuration");
-                var patterns = config.GetSection("Parsing").Get<ParsingPatterns>();
-                var templatePath = config.GetSection("Template").Value;
-                var tagsToExclude = (config.GetSection("TagsToExclude").Value ?? "").Split(",");
-                var minVersion = config.GetSection("MinVersion").Value;
-                var repositoryConfig = config.GetSection("Repository").Get<RepositoryConfig>();
-                var fileSource = config.GetSection("FileSource").Value;
+                var appConfig = config.Get<AppConfig>();
                 
-                var template = GetTemplate(templatePath);
-                var repo = TryOrExit(() => new Repository(repositoryConfig.Path), "Failed to initialize repository");
-                var cache = new ChangeCache();
-                var gitReader = new GitReader(repo, patterns);
-                var idToOverrideChange = new Dictionary<string, IChange>();
-                
-                if (!string.IsNullOrEmpty(fileSource))
-                {
-                    var fileReader = new FileReader<IChange>(fileSource, new FileSourceRowParser(Console.Error));
-                    var filteredFileChanges = new FilteredChanges(fileReader.Values(), minVersion, tagsToExclude);
-                    cache.Add(filteredFileChanges);
-                }
-                if (!string.IsNullOrEmpty(repositoryConfig.OverrideSource))
-                {
-                    var overrideFileReader = new FileReader<OverrideChange>(repositoryConfig.OverrideSource, new OverrideSourceRowParser(Console.Error));
-                    idToOverrideChange = overrideFileReader.Values().ToDictionary<OverrideChange, string, IChange>(change => change.Id, change => change);
-                }
-                
-                var gitChanges = idToOverrideChange.Any() ? gitReader.Changes(idToOverrideChange) : gitReader.Changes();
-                var filteredRepositoryChanges = new FilteredChanges(gitChanges, minVersion, tagsToExclude);
-                
-                cache.Add(filteredRepositoryChanges);
+                var template = GetTemplate(appConfig.Template);
+                var repo = TryOrExit(() => new Repository(appConfig.Repository.Path), "Failed to initialize repository");
+                var tagsToExclude = appConfig.TagsToExclude.Split(",");
 
-                var results = cache.GetAsValueDictionary();
-                var stubble = new StubbleBuilder().Build();
-                var output = stubble.Render(template, results);
+                if (appConfig.MultiProject)
+                {
+                    var filteredFileChanges = new FilteredChanges(new List<IChange>(), appConfig.MinVersion, tagsToExclude);
+                    var idToProjectChange = new Dictionary<string, ProjectChange>();
+                    if (!string.IsNullOrEmpty(appConfig.FileSource))
+                    {
+                        var fileReader = new FileReader<ProjectChange>(appConfig.FileSource, new ProjectFileSourceRowParser(Console.Error));
+                        filteredFileChanges = new FilteredChanges(fileReader.Values(), appConfig.MinVersion, tagsToExclude);
+                    }
+                    if (!string.IsNullOrEmpty(appConfig.Repository.OverrideSource))
+                    {
+                        var overrideFileReader = new FileReader<OverrideProjectChange>(appConfig.Repository.OverrideSource, new OverrideProjectSourceRowParser(Console.Error));
+                        idToProjectChange = overrideFileReader.Values().ToDictionary<OverrideProjectChange, string, ProjectChange>(change => change.Id, change => change);
+                    }
+                    var parser = new ProjectCommitParser(appConfig.Parsing);
+                    var gitReader = new GitReader<ProjectChange>(repo, parser, idToProjectChange);
+                    var gitChanges = gitReader.Values();
+                    var filteredRepositoryChanges = new FilteredChanges(gitChanges, appConfig.MinVersion, tagsToExclude).Select(c => (ProjectChange)c);
+                    var projectToCache = filteredRepositoryChanges.Concat(filteredFileChanges).GroupBy(change => ((ProjectChange) change).Project).ToDictionary(group => group.Key, group =>
+                    {
+                        var projectCache = new ChangeCache();
+                        projectCache.Add(group);
+                        return projectCache;
+                    });
+                    
+                    var stubble = new StubbleBuilder().Build();
+
+                    foreach (var (project, projectCache) in projectToCache)
+                    {
+                        var results = projectCache.GetAsValueDictionary();
+                        var output = stubble.Render(template, results);
                 
-                File.WriteAllText(@"changelog.md", output);
+                        File.WriteAllText($@"{project}-changelog.md", output);
+                    }
+                }
+                else
+                {
+                    var filteredFileChanges = new FilteredChanges(new List<IChange>(), appConfig.MinVersion, tagsToExclude);
+                    var idToOverrideChange = new Dictionary<string, IChange>();
+                    if (!string.IsNullOrEmpty(appConfig.FileSource))
+                    {
+                        var fileReader = new FileReader<DefaultChange>(appConfig.FileSource, new DefaultFileSourceRowParser(Console.Error));
+                        filteredFileChanges = new FilteredChanges(fileReader.Values(), appConfig.MinVersion, tagsToExclude);
+                    }
+                    if (!string.IsNullOrEmpty(appConfig.Repository.OverrideSource))
+                    {
+                        var overrideFileReader = new FileReader<OverrideChange>(appConfig.Repository.OverrideSource, new OverrideSourceRowParser(Console.Error));
+                        idToOverrideChange = overrideFileReader.Values().ToDictionary<OverrideChange, string, IChange>(change => change.Id, change => change);
+                    }
+                    var cache = new ChangeCache();
+                    var parser = new DefaultCommitParser(appConfig.Parsing);
+                    var gitReader = new GitReader<IChange>(repo, parser, idToOverrideChange);
+                    var gitChanges = gitReader.Values();
+                    var filteredRepositoryChanges = new FilteredChanges(gitChanges, appConfig.MinVersion, tagsToExclude);
+                
+                    cache.Add(filteredFileChanges);
+                    cache.Add(filteredRepositoryChanges);
+
+                    var results = cache.GetAsValueDictionary();
+                    var stubble = new StubbleBuilder().Build();
+                    var output = stubble.Render(template, results);
+                
+                    File.WriteAllText(@"changelog.md", output);
+                }
             }
             catch (Exception e)
             {

@@ -4,8 +4,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Gitchanges.Changes;
-using Gitchanges.Configuration;
 using Gitchanges.Readers;
+using Gitchanges.Readers.Parsers;
 using LibGit2Sharp;
 using Moq;
 using NUnit.Framework;
@@ -15,99 +15,57 @@ namespace Gitchanges.Tests.Readers
     [TestFixture]
     public class GitReaderTests
     {
-        private readonly ParsingPatterns  _defaultPatterns = new ParsingPatterns
-        {
-            Reference = "reference:(.*)[\n]?",
-            Version = "version:(.*)[\n]?",
-            Tag = "tag:(.*)[\n]?"
-        };
         [Test]
         public void VerifyReaderReadsFromRepository()
         {
             var expectedChanges = new List<IChange>
             {
-                new GitChange("0.2.0", "Added", "Some Summary", DateTimeOffset.Now),
-                new GitChange("0.1.0", "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1))
+                new DefaultChange("0.2.0", "Added", "Some Summary", DateTimeOffset.Now),
+                new DefaultChange("0.1.0", "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1))
             };
             var repoMock = new Mock<IRepository>();
             var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == MockCommitEnumerator(expectedChanges));
-            var reader = new GitReader(repoMock.Object, _defaultPatterns);
+            var parserMock = new Mock<ICommitParser<IChange>>();
+            var reader = new GitReader<IChange>(repoMock.Object, parserMock.Object);
 
             repoMock.Setup(r => r.Commits).Returns(commitLog);
-            
-            Assert.That(reader.Changes(), Is.EquivalentTo(expectedChanges));
-            repoMock.VerifyAll();
-        }
-        
-        [Test]
-        public void VerifyUnreleasedCommitsHaveUnreleasedVersion()
-        {
-            var expectedChanges = new List<IChange>
+            foreach (var expectedChange in expectedChanges)
             {
-                new GitChange("Unreleased", "Added", "Some Unreleased Summary", DateTimeOffset.Now),
-                new GitChange("0.2.0", "Added", "Some Summary", DateTimeOffset.Now.AddDays(-1)),
-                new GitChange("0.1.0", "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-2))
-            };
-            var repoMock = new Mock<IRepository>();
-            var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == MockCommitEnumerator(expectedChanges));
-            var reader = new GitReader(repoMock.Object, _defaultPatterns);
+                parserMock.Setup(p => p.Parse(It.Is<Commit>(c => c.Id.Sha == ToSha1String(expectedChange)))).Returns(expectedChange);
+            }
 
-            repoMock.Setup(r => r.Commits).Returns(commitLog);
-            
-            Assert.That(reader.Changes(), Is.EquivalentTo(expectedChanges));
+            Assert.That(reader.Values(), Is.EquivalentTo(expectedChanges));
             repoMock.VerifyAll();
         }
         
         [Test]
-        public void VerifyReleasedCommitsWithUnreleasedInVersionHaveCorrectVersion()
+        public void VerifyUnparseableAreSkipped()
         {
             var today = DateTimeOffset.Now;
             var yesterday = DateTimeOffset.Now.AddDays(-1);
             var twoDaysAgo = DateTimeOffset.Now.AddDays(-2);
             var changes = new List<IChange>
             {
-                new GitChange("0.2.0", "Added", "Some Summary", today),
-                new GitChange("Unreleased", "Added", "Some now released Summary", yesterday),
-                new GitChange("0.1.0", "Removed", "Another Summary", twoDaysAgo)
+                new DefaultChange("0.2.0", " ", "Without tag", today),
+                new DefaultChange(" ", "Added", "WithoutVersion", yesterday),
+                new DefaultChange("0.1.0", "Removed", "Another Summary", twoDaysAgo)
             };
             var expectedChanges = new List<IChange>
             {
-                new GitChange("0.2.0", "Added", "Some Summary", today),
-                new GitChange("0.2.0", "Added", "Some now released Summary", yesterday),
-                new GitChange("0.1.0", "Removed", "Another Summary", twoDaysAgo)
+                new DefaultChange("0.1.0", "Removed", "Another Summary", twoDaysAgo)
             };
             var repoMock = new Mock<IRepository>();
             var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == MockCommitEnumerator(changes));
-            var reader = new GitReader(repoMock.Object, _defaultPatterns);
+            var parserMock = new Mock<ICommitParser<IChange>>();
+            var reader = new GitReader<IChange>(repoMock.Object, parserMock.Object);
+
+            parserMock.SetupSequence(p => p.Parse(It.IsAny<Commit>()))
+                .Returns((IChange)null)
+                .Returns((IChange)null)
+                .Returns(expectedChanges.First);
 
             repoMock.Setup(r => r.Commits).Returns(commitLog);
-            var actualChanges = reader.Changes().ToList();
-            Assert.That(actualChanges, Is.EquivalentTo(expectedChanges));
-            repoMock.VerifyAll();
-        }
-        
-        [Test]
-        public void VerifyCommitsWithoutTagOrVersionAreSkipped()
-        {
-            var today = DateTimeOffset.Now;
-            var yesterday = DateTimeOffset.Now.AddDays(-1);
-            var twoDaysAgo = DateTimeOffset.Now.AddDays(-2);
-            var changes = new List<IChange>
-            {
-                new GitChange("0.2.0", " ", "Without tag", today),
-                new GitChange(" ", "Added", "WithoutVersion", yesterday),
-                new GitChange("0.1.0", "Removed", "Another Summary", twoDaysAgo)
-            };
-            var expectedChanges = new List<IChange>
-            {
-                new GitChange("0.1.0", "Removed", "Another Summary", twoDaysAgo)
-            };
-            var repoMock = new Mock<IRepository>();
-            var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == MockCommitEnumerator(changes));
-            var reader = new GitReader(repoMock.Object, _defaultPatterns);
-
-            repoMock.Setup(r => r.Commits).Returns(commitLog);
-            var actualChanges = reader.Changes().ToList();
+            var actualChanges = reader.Values().ToList();
             Assert.That(actualChanges, Is.EquivalentTo(expectedChanges));
             repoMock.VerifyAll();
         }
@@ -117,64 +75,37 @@ namespace Gitchanges.Tests.Readers
         {
             var yesterday = DateTimeOffset.Now.AddDays(-1);
             var twoDaysAgo = DateTimeOffset.Now.AddDays(-2);
-            var badChange = new GitChange(" ", "Added", "WithoutVersion", yesterday);
-            var fixedChange = new GitChange("0.2.0", badChange.Tag, badChange.Summary, badChange.Date);
-            var badChangeId = ToSha1String(badChange);
+            var badChange = new DefaultChange(" ", "Added", "WithoutVersion", yesterday);
+            var fixedChange = new DefaultChange("0.2.0", badChange.Tag, badChange.Summary, badChange.Date);
+            var fineChange = new DefaultChange("0.1.0", "Removed", "Another Summary", twoDaysAgo);
             var overrides = new Dictionary<string, IChange>
             {
-                {badChangeId, fixedChange}
+                {ToSha1String(badChange), fixedChange}
             };
             var changes = new List<IChange>
             {
                 badChange,
-                new GitChange("0.1.0", "Removed", "Another Summary", twoDaysAgo)
+                fineChange
             };
             var expectedChanges = new List<IChange>
             {
                 fixedChange,
-                new GitChange("0.1.0", "Removed", "Another Summary", twoDaysAgo)
+                fineChange
             };
             var repoMock = new Mock<IRepository>();
             var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == MockCommitEnumerator(changes));
-            var reader = new GitReader(repoMock.Object, _defaultPatterns);
-
+            var parserMock = new Mock<ICommitParser<IChange>>();
+            parserMock.Setup(p => p.Parse(fixedChange)).Returns(fixedChange);
+            parserMock.Setup(p => p.Parse(It.IsAny<Commit>())).Returns(fineChange);
             repoMock.Setup(r => r.Commits).Returns(commitLog);
-            var actualChanges = reader.Changes(overrides).ToList();
+
+            var reader = new GitReader<IChange>(repoMock.Object, parserMock.Object, overrides);
+            var actualChanges = reader.Values();
+            
             Assert.That(actualChanges, Is.EquivalentTo(expectedChanges));
             repoMock.VerifyAll();
         }
-        
-        [Test]
-        public void VerifyOverriddenChangeVersionsAreUsedForPrecedingUnreleasedVersions()
-        {
-            var overriddenChange = new GitChange("0.2.0", "Added", "Some Summary", DateTimeOffset.Now.Date);
-            var overrideChange = new GitChange(overriddenChange.Version, overriddenChange.Tag, "Some other summary", overriddenChange.Date);
-            var unreleasedChange = new GitChange("Unreleased", overriddenChange.Tag, overriddenChange.Summary, overriddenChange.Date);
-            var badChangeId = ToSha1String(overriddenChange);
-            var idToOverrideChange = new Dictionary<string, IChange>
-            {
-                {badChangeId, overrideChange}
-            };
-            var repositoryChanges = new List<IChange>
-            {
-                overriddenChange,
-                unreleasedChange
-            };
-            var expectedChanges = new List<IChange>
-            {
-                overrideChange,
-                new GitChange(overrideChange.Version, unreleasedChange.Tag, unreleasedChange.Summary, unreleasedChange.Date)
-            };
-            var repoMock = new Mock<IRepository>();
-            var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == MockCommitEnumerator(repositoryChanges));
-            var reader = new GitReader(repoMock.Object, _defaultPatterns);
-
-            repoMock.Setup(r => r.Commits).Returns(commitLog);
-            var actualChanges = reader.Changes(idToOverrideChange).ToList();
-            Assert.That(actualChanges, Is.EquivalentTo(expectedChanges));
-            repoMock.VerifyAll();
-        }
-        
+       
         private static IEnumerator<Commit> MockCommitEnumerator(IEnumerable<IChange> expectedChanges)
         {
             return expectedChanges.Select(MockCommit).GetEnumerator();
