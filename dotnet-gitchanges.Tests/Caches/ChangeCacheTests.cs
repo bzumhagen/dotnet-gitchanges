@@ -17,8 +17,8 @@ namespace Gitchanges.Tests.Caches
             var today = DateTime.Today;
             var expectedChanges = new List<IChange>
             {
-                new GitChange("0.1.0", "Added", "This is a change", today, "REL-1234"),
-                new GitChange("0.1.0", "Added", "This is another change", today, "REL-1235")
+                new DefaultChange("0.1.0", "Added", "This is a change", today, "REL-1234"),
+                new DefaultChange("0.1.0", "Added", "This is another change", today, "REL-1235")
             };
             var expectedChangeKey = new ChangeCache.ChangeKey(expectedChanges.First());
             
@@ -35,8 +35,8 @@ namespace Gitchanges.Tests.Caches
         public void VerifyMultipleChangesWithDifferentKeysAddedSuccessfully()
         {
             var today = DateTime.Today;
-            var expectedChange1 = new GitChange("0.1.0", "Added", "This is a change", today, "REL-1234");
-            var expectedChange2 = new GitChange("0.1.0", "Removed", "This is a change", today, "REL-1235");
+            var expectedChange1 = new DefaultChange("0.1.0", "Added", "This is a change", today, "REL-1234");
+            var expectedChange2 = new DefaultChange("0.1.0", "Removed", "This is a change", today, "REL-1235");
             var expectedChangeKey1 = new ChangeCache.ChangeKey(expectedChange1);
             var expectedChangeKey2 = new ChangeCache.ChangeKey(expectedChange2);
             
@@ -58,12 +58,12 @@ namespace Gitchanges.Tests.Caches
         [Test]
         public void VerifyGetAsValueDictionaryIsSuccessful()
         {
-            var expectedChange1 = new GitChange("0.2.0", "Added", "This is the latest 0.2.0", DateTime.Today, "REL-1231");
-            var expectedChange2 = new GitChange("0.2.0", "Removed", "This is the middle 0.2.0", DateTime.Today.AddHours(-2), "REL-1232");
-            var expectedChange3 = new GitChange("0.2.0", "Removed", "This is the earliest 0.2.0", DateTime.Today.AddHours(-3), "REL-1233");
-            var expectedChange4 = new GitChange("0.1.0", "Added", "This is a change", DateTime.Today.AddDays(-1), "REL-1234");
-            var expectedChange5 = new GitChange("0.1.0", "Removed", "This is the middle 0.1.0", DateTime.Today.AddDays(-2), "REL-1235");
-            var expectedChange6 = new GitChange("0.1.0", "Removed", "This is the earliest 0.1.0", DateTime.Today.AddDays(-3), "REL-1236");
+            var expectedChange1 = new DefaultChange("0.2.0", "Added", "This is the latest 0.2.0", DateTime.Today, "REL-1231");
+            var expectedChange2 = new DefaultChange("0.2.0", "Removed", "This is the middle 0.2.0", DateTime.Today.AddHours(-2), "REL-1232");
+            var expectedChange3 = new DefaultChange("0.2.0", "Removed", "This is the earliest 0.2.0", DateTime.Today.AddHours(-3), "REL-1233");
+            var expectedChange4 = new DefaultChange("0.1.0", "Added", "This is a change", DateTime.Today.AddDays(-1), "REL-1234");
+            var expectedChange5 = new DefaultChange("0.1.0", "Removed", "This is the middle 0.1.0", DateTime.Today.AddDays(-2), "REL-1235");
+            var expectedChange6 = new DefaultChange("0.1.0", "Removed", "This is the earliest 0.1.0", DateTime.Today.AddDays(-3), "REL-1236");
             
             var changeCache = new ChangeCache();
 

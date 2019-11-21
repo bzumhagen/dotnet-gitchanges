@@ -14,9 +14,9 @@ namespace Gitchanges.Tests.Enumerables
         {
             var now = DateTimeOffset.Now;
             var minVersion = "1.5.0";
-            var changeVersion2 = new GitChange("2.0.0", "Added", "Some 2.0.0 Summary", now);
-            var changeVersion1Pt5 = new GitChange(minVersion, "Added", "Some 1.5.0 Summary", now.AddDays(-1));
-            var changeVersion1 = new GitChange("1.0.0", "Added", "Some 1.0.0 Summary", now.AddDays(-2));
+            var changeVersion2 = new DefaultChange("2.0.0", "Added", "Some 2.0.0 Summary", now);
+            var changeVersion1Pt5 = new DefaultChange(minVersion, "Added", "Some 1.5.0 Summary", now.AddDays(-1));
+            var changeVersion1 = new DefaultChange("1.0.0", "Added", "Some 1.0.0 Summary", now.AddDays(-2));
             var changes = new List<IChange> {changeVersion2, changeVersion1Pt5, changeVersion1};
             var expectedChanges = new List<IChange> {changeVersion2, changeVersion1Pt5};
             
@@ -30,9 +30,9 @@ namespace Gitchanges.Tests.Enumerables
         {
             var now = DateTimeOffset.Now;
             var excludedTag = "Maintenance";
-            var changeVersion2 = new GitChange("2.0.0", "Added", "Some 2.0.0 Summary", now);
-            var changeVersion1Pt5 = new GitChange("1.5.0", excludedTag, "Some 1.5.0 Summary", now.AddDays(-1));
-            var changeVersion1 = new GitChange("1.0.0", "Added", "Some 1.0.0 Summary", now.AddDays(-2));
+            var changeVersion2 = new DefaultChange("2.0.0", "Added", "Some 2.0.0 Summary", now);
+            var changeVersion1Pt5 = new DefaultChange("1.5.0", excludedTag, "Some 1.5.0 Summary", now.AddDays(-1));
+            var changeVersion1 = new DefaultChange("1.0.0", "Added", "Some 1.0.0 Summary", now.AddDays(-2));
             var changes = new List<IChange> {changeVersion2, changeVersion1Pt5, changeVersion1};
             var expectedChanges = new List<IChange> {changeVersion2, changeVersion1};
             
