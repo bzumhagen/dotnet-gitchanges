@@ -9,7 +9,7 @@ jobs:
         - dotnet restore
         - dotnet test
     - stage: deploy
-      if: "branch = master AND commit_message =~ /^.*version: [0-9]+\\.[0-9]+\\.[0-9]+.*$/"
+      if: "branch = master AND type = push AND fork = false AND commit_message =~ /^.*version: [0-9]+\\.[0-9]+\\.[0-9]+.*$/"
       script:
         - set -e
         - version=$(cat version.txt)
