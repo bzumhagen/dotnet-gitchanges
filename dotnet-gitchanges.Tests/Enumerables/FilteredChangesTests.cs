@@ -20,7 +20,7 @@ namespace Gitchanges.Tests.Enumerables
             var changes = new List<IChange> {changeVersion2, changeVersion1Pt5, changeVersion1};
             var expectedChanges = new List<IChange> {changeVersion2, changeVersion1Pt5};
             
-            var filteredChanges = new FilteredChanges(changes, minVersion, new HashSet<string>());
+            var filteredChanges = new FilteredChanges<IChange>(changes, minVersion, new HashSet<string>());
             
             Assert.That(filteredChanges, Is.EquivalentTo(expectedChanges));
         }
@@ -36,7 +36,7 @@ namespace Gitchanges.Tests.Enumerables
             var changes = new List<IChange> {changeVersion2, changeVersion1Pt5, changeVersion1};
             var expectedChanges = new List<IChange> {changeVersion2, changeVersion1};
             
-            var filteredChanges = new FilteredChanges(changes, null, new List<string> {excludedTag});
+            var filteredChanges = new FilteredChanges<IChange>(changes, null, new List<string> {excludedTag});
             
             Assert.That(filteredChanges, Is.EquivalentTo(expectedChanges));
         }

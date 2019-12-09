@@ -6,20 +6,20 @@ using Gitchanges.Changes;
 
 namespace Gitchanges.Enumerables
 {
-    public class FilteredChanges : IEnumerable<IChange>
+    public class FilteredChanges<T> : IEnumerable<T> where T : IChange
     {
-        private readonly IEnumerable<IChange> _changes;
+        private readonly IEnumerable<T> _changes;
         private readonly string _minVersion;
         private readonly HashSet<string> _tagsToExclude;
         
-        public FilteredChanges(IEnumerable<IChange> changes, string minVersion, IEnumerable<string> tagsToExclude)
+        public FilteredChanges(IEnumerable<T> changes, string minVersion, IEnumerable<string> tagsToExclude)
         {
             _changes = changes;
             _minVersion = minVersion;
             _tagsToExclude = tagsToExclude.Select(tag => tag.ToLower()).ToHashSet();
         }
         
-        public IEnumerator<IChange> GetEnumerator()
+        public IEnumerator<T> GetEnumerator()
         {
             foreach (var change in _changes)
             {

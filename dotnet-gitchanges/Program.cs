@@ -8,7 +8,7 @@ using CommandLine;
 using Gitchanges.Caches;
 using Gitchanges.Changes;
 using Gitchanges.Configuration;
-using Gitchanges.Enumerables;
+using Gitchanges.Generators;
 using Gitchanges.Readers;
 using Gitchanges.Readers.Parsers;
 using LibGit2Sharp;
@@ -71,70 +71,59 @@ namespace Gitchanges
                 
                 var template = GetTemplate(appConfig.Template);
                 var repo = TryOrExit(() => new Repository(appConfig.Repository.Path), "Failed to initialize repository");
+                var idToOverrideChange = new Dictionary<string, IChange>();
                 var tagsToExclude = appConfig.TagsToExclude.Split(",");
+                var renderer = new StubbleBuilder().Build();
 
                 if (appConfig.MultiProject)
                 {
-                    var filteredFileChanges = new FilteredChanges(new List<IChange>(), appConfig.MinVersion, tagsToExclude);
+                    var readers = new List<IGenericReader<ProjectChange>>();
                     var idToProjectChange = new Dictionary<string, ProjectChange>();
                     if (!string.IsNullOrEmpty(appConfig.FileSource))
                     {
                         var fileReader = new FileReader<ProjectChange>(appConfig.FileSource, new ProjectFileSourceRowParser(Console.Error));
-                        filteredFileChanges = new FilteredChanges(fileReader.Values(), appConfig.MinVersion, tagsToExclude);
+                        readers.Add(fileReader);
                     }
                     if (!string.IsNullOrEmpty(appConfig.Repository.OverrideSource))
                     {
                         var overrideFileReader = new FileReader<OverrideProjectChange>(appConfig.Repository.OverrideSource, new OverrideProjectSourceRowParser(Console.Error));
+                        readers.Add(overrideFileReader);
                         idToProjectChange = overrideFileReader.Values().ToDictionary<OverrideProjectChange, string, ProjectChange>(change => change.Id, change => change);
                     }
                     var parser = new ProjectCommitParser(appConfig.Parsing);
                     var gitReader = new GitReader<ProjectChange>(repo, parser, idToProjectChange);
-                    var gitChanges = gitReader.Values();
-                    var filteredRepositoryChanges = new FilteredChanges(gitChanges, appConfig.MinVersion, tagsToExclude).Select(c => (ProjectChange)c);
-                    var projectToCache = filteredRepositoryChanges.Concat(filteredFileChanges).GroupBy(change => ((ProjectChange) change).Project).ToDictionary(group => group.Key, group =>
-                    {
-                        var projectCache = new ChangeCache();
-                        projectCache.Add(group);
-                        return projectCache;
-                    });
+                    readers.Add(gitReader);
                     
-                    var stubble = new StubbleBuilder().Build();
+                    var generator = new ProjectChangelogGenerator(readers, template, renderer);
+                    var projectToOutput = generator.Generate(appConfig.MinVersion, tagsToExclude);
 
-                    foreach (var (project, projectCache) in projectToCache)
+                    foreach (var (project, output) in projectToOutput)
                     {
-                        var results = projectCache.GetAsValueDictionary();
-                        var output = stubble.Render(template, results);
-                
                         File.WriteAllText($@"{project}-changelog.md", output);
                     }
                 }
                 else
                 {
-                    var filteredFileChanges = new FilteredChanges(new List<IChange>(), appConfig.MinVersion, tagsToExclude);
-                    var idToOverrideChange = new Dictionary<string, IChange>();
+                    var readers = new List<IGenericReader<IChange>>();
+                    
                     if (!string.IsNullOrEmpty(appConfig.FileSource))
                     {
                         var fileReader = new FileReader<DefaultChange>(appConfig.FileSource, new DefaultFileSourceRowParser(Console.Error));
-                        filteredFileChanges = new FilteredChanges(fileReader.Values(), appConfig.MinVersion, tagsToExclude);
+                        readers.Add(fileReader);
                     }
+                    
                     if (!string.IsNullOrEmpty(appConfig.Repository.OverrideSource))
                     {
                         var overrideFileReader = new FileReader<OverrideChange>(appConfig.Repository.OverrideSource, new OverrideSourceRowParser(Console.Error));
                         idToOverrideChange = overrideFileReader.Values().ToDictionary<OverrideChange, string, IChange>(change => change.Id, change => change);
                     }
+                    
+                    var gitReader = new GitReader<IChange>(repo, new DefaultCommitParser(appConfig.Parsing), idToOverrideChange);
+                    readers.Add(gitReader);
+                    
                     var cache = new ChangeCache();
-                    var parser = new DefaultCommitParser(appConfig.Parsing);
-                    var gitReader = new GitReader<IChange>(repo, parser, idToOverrideChange);
-                    var gitChanges = gitReader.Values();
-                    var filteredRepositoryChanges = new FilteredChanges(gitChanges, appConfig.MinVersion, tagsToExclude);
-                
-                    cache.Add(filteredFileChanges);
-                    cache.Add(filteredRepositoryChanges);
-
-                    var results = cache.GetAsValueDictionary();
-                    var stubble = new StubbleBuilder().Build();
-                    var output = stubble.Render(template, results);
-                
+                    var generator = new StringChangelogGenerator(readers, cache, template, renderer);
+                    var output = generator.Generate(appConfig.MinVersion, tagsToExclude);
                     File.WriteAllText(@"changelog.md", output);
                 }
             }
