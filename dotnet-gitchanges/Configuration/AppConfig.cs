@@ -9,5 +9,6 @@ namespace Gitchanges.Configuration
         public RepositoryConfig Repository { get; set; }
         public string FileSource { get; set; }
         public bool MultiProject { get; set; }
+        public bool VersionFromGitTag { get; set; }
     }
 }

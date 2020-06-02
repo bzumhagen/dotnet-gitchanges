@@ -117,8 +117,17 @@ namespace Gitchanges
                         var overrideFileReader = new FileReader<OverrideChange>(appConfig.Repository.OverrideSource, new OverrideSourceRowParser(Console.Error));
                         idToOverrideChange = overrideFileReader.Values().ToDictionary<OverrideChange, string, IChange>(change => change.Id, change => change);
                     }
-                    
-                    var gitReader = new GitReader<IChange>(repo, new DefaultCommitParser(appConfig.Parsing), idToOverrideChange);
+                    Dictionary<string, string> commitShaToTagName = null;
+                    if (appConfig.VersionFromGitTag)
+                    {
+                        commitShaToTagName = new Dictionary<string, string>();
+                        foreach (var tag in repo.Tags)
+                        {
+                            commitShaToTagName.Add(tag.Target.Sha, tag.FriendlyName);
+                        }
+                    }
+                    var commitParser = new DefaultCommitParser(appConfig.Parsing, commitShaToTagName);
+                    var gitReader = new GitReader<IChange>(repo, commitParser, idToOverrideChange);
                     readers.Add(gitReader);
                     
                     var cache = new ChangeCache();
