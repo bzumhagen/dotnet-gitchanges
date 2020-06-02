@@ -85,7 +85,8 @@ See `dotnet-gitchanges\appsettings.json` for the default settings file. Any sett
       "OverrideSource": "someOverrideSource.txt"
     },
     "FileSource": "someHistorialChanges.txt",
-    "MultiProject": false
+    "MultiProject": false,
+    "VersionFromGitTags": false
 }
 ```
 ***Descriptions***
@@ -101,6 +102,7 @@ See `dotnet-gitchanges\appsettings.json` for the default settings file. Any sett
 | Repository.OverrideSource | Path to override source (see [Overriding repository changes](#overriding-repository-changes))
 | FileSource | Path to file source (see [Existing repository](#existing-repository)).
 | MultiProject | Specifies whether repository should be processed as a multi project repository.
+| VersionFromGitTag | If true and the commit message does not contain a version, it will be taken from commit tag if possible. All untagged commits will be grouped under the nearest subsequent tagged version.
 
 #### Custom Template
 Currently the only supported templating syntax supported is [Mustache](http://mustache.github.io/mustache.5.html). See `dotnet-gitchanges\KeepAChangelogTemplate.Mustache` for the default template file.

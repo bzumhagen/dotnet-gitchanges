@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Gitchanges.Changes;
 using Gitchanges.Configuration;
 using Gitchanges.Readers.Parsers;
@@ -18,7 +19,31 @@ namespace Gitchanges.Tests.Readers.Parsers
             Version = "version:(.*)[\n]?",
             Tag = "tag:(.*)[\n]?"
         };
-        
+
+        [Test]
+        public void VerifyParsesWithGitTags()
+        {
+            var gitTags = new Dictionary<string, string>();
+            gitTags.Add("THISCOULDBEASHA", "0.0.0");
+            var expectedChange = new DefaultChange("0.0.0", "Added", "Some Summary", DateTimeOffset.Now);
+            var parser = new DefaultCommitParser(_defaultPatterns, gitTags);
+
+            var actual = parser.Parse(MockCommit(expectedChange));
+            Assert.That(actual, Is.EqualTo(expectedChange));
+        }
+
+        [Test]
+        public void VerifyParsesWithGitTagsNoTagMatch()
+        {
+            var gitTags = new Dictionary<string, string>();
+            gitTags.Add("THISCOULDBEASHA_OTHER", "0.0.0");
+            var expectedChange = new DefaultChange("Unreleased", "Added", "Some Summary", DateTimeOffset.Now);
+            var parser = new DefaultCommitParser(_defaultPatterns, gitTags);
+
+            var actual = parser.Parse(MockCommit(expectedChange));
+            Assert.That(actual, Is.EqualTo(expectedChange));
+        }
+
         [Test]
         public void VerifyParsesWithoutReference()
         {
@@ -93,6 +118,7 @@ reference: {change.Reference}
 version: {change.Version}
 tag: {change.Tag}
 ";
+            commitMock.SetupGet(x => x.Sha).Returns("THISCOULDBEASHA");
             commitMock.SetupGet(x => x.MessageShort).Returns(change.Summary);
             commitMock.SetupGet(x => x.Author).Returns(commitAuthor);
             commitMock.SetupGet(x => x.Message).Returns(expectedMessage);
