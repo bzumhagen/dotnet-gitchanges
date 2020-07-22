@@ -10,16 +10,16 @@ namespace Gitchanges.Caches
         public class ChangeKey
         {
             public string Version { get; }
-            public string Tag { get; }
+            public string ChangeType { get; }
 
             public ChangeKey(IChange change)
             {
                 Version = change.Version;
-                Tag = change.Tag;
+                ChangeType = change.ChangeType;
             }
             protected bool Equals(ChangeKey other)
             {
-                return Version == other.Version && Tag == other.Tag;
+                return Version == other.Version && ChangeType == other.ChangeType;
             }
 
             public override bool Equals(object obj)
@@ -34,7 +34,7 @@ namespace Gitchanges.Caches
             {
                 unchecked
                 {
-                    return ((Version != null ? Version.GetHashCode() : 0) * 397) ^ (Tag != null ? Tag.GetHashCode() : 0);
+                    return ((Version != null ? Version.GetHashCode() : 0) * 397) ^ (ChangeType != null ? ChangeType.GetHashCode() : 0);
                 }
             }
         }
@@ -55,20 +55,20 @@ namespace Gitchanges.Caches
                     .GroupBy(pair => pair.Key.Version)
                     .ToDictionary(group => group.Key, group => 
                         group
-                            .GroupBy(pair => pair.Key.Tag)
+                            .GroupBy(pair => pair.Key.ChangeType)
                             .ToDictionary(innerGroup => innerGroup.Key, innerGroup => innerGroup.SelectMany(pair => pair.Value))
                     );
             foreach (var version in versionGroups.Keys.OrderByDescending(v => v))
             {
-                var tagToChanges = versionGroups[version];
+                var changeTypeToChanges = versionGroups[version];
                 var versionDate = DateTimeOffset.MinValue;
-                var tagsList = new List<Dictionary<string, object>>();
-                foreach (var tag in tagToChanges.Keys.OrderBy(t => t))
+                var changeTypeList = new List<Dictionary<string, object>>();
+                foreach (var changeType in changeTypeToChanges.Keys.OrderBy(t => t))
                 {
-                    var tagChanges = tagToChanges[tag];
+                    var changeTypeChanges = changeTypeToChanges[changeType];
                     var changesList = new List<Dictionary<string, object>>();
                     
-                    foreach (var change in tagChanges.OrderByDescending (c => c.Date))
+                    foreach (var change in changeTypeChanges.OrderByDescending (c => c.Date))
                     {
                         if (change.Date > versionDate) versionDate = change.Date;
                         
@@ -78,9 +78,9 @@ namespace Gitchanges.Caches
                             {"reference", change.Reference}
                         });
                     }
-                    tagsList.Add(new Dictionary<string, object>()
+                    changeTypeList.Add(new Dictionary<string, object>()
                     {
-                        {"tag", tag},
+                        {"changeType", changeType},
                         {"changes", changesList}
                     });
                 }
@@ -88,7 +88,7 @@ namespace Gitchanges.Caches
                 {
                     {"version", version},
                     {"date", versionDate.ToString("yyyy-MM-dd")},
-                    {"tags", tagsList}
+                    {"changeTypes", changeTypeList}
                 });
             }
             retVal.Add("versions", versionList);

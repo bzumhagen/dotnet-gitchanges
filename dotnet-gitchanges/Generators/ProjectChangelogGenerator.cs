@@ -22,11 +22,11 @@ namespace Gitchanges.Generators
             _renderer = renderer;
         }
         
-        public Dictionary<string, string> Generate(string minVersion = null, IEnumerable<string> tagsToExclude = null)
+        public Dictionary<string, string> Generate(string minVersion = null, IEnumerable<string> changeTypesToExclude = null)
         {
             var projectToCache = new Dictionary<string, IChangeCache>();
             var projectToOutput = new Dictionary<string, string>();
-            var toExclude = tagsToExclude?.ToList() ?? new List<string>();
+            var toExclude = changeTypesToExclude?.ToList() ?? new List<string>();
             foreach(var reader in _readers)
             {
                 var values = reader.Values();

@@ -72,12 +72,12 @@ namespace Gitchanges.Tests.Caches
             var actualValueDictionary = changeCache.GetAsValueDictionary();
             var actualVersions = (List<Dictionary<string, object>>) actualValueDictionary["versions"];
             var version2 = actualVersions.Find(v => v.ContainsValue("0.2.0"));
-            var version2Tags = (List<Dictionary<string, object>>) version2["tags"];
-            var version2AddedDictionary = version2Tags.Find(t => t.ContainsValue("Added"));
+            var version2ChangeTypes = (List<Dictionary<string, object>>) version2["changeTypes"];
+            var version2AddedDictionary = version2ChangeTypes.Find(t => t.ContainsValue("Added"));
             var version2AddedChanges = (List<Dictionary<string, object>>) version2AddedDictionary["changes"];
             var version2AddedChangeSummaries = version2AddedChanges.Select(c => c["summary"]);
             var version2AddedChangeReferences = version2AddedChanges.Select(c => c["reference"]);
-            var version2RemovedDictionary = version2Tags.Find(t => t.ContainsValue("Removed"));
+            var version2RemovedDictionary = version2ChangeTypes.Find(t => t.ContainsValue("Removed"));
             var version2RemovedChanges = (List<Dictionary<string, object>>) version2RemovedDictionary["changes"];
             var version2RemovedChangeSummaries = version2RemovedChanges.Select(c => c["summary"]);
             var version2RemovedChangeReferences = version2RemovedChanges.Select(c => c["reference"]);
@@ -89,12 +89,12 @@ namespace Gitchanges.Tests.Caches
             Assert.That(version2RemovedChangeReferences, Is.EquivalentTo(new List<string>{expectedChange2.Reference, expectedChange3.Reference}));
             
             var version1 = actualVersions.Find(v => v.ContainsValue("0.1.0"));
-            var version1Tags = (List<Dictionary<string, object>>) version1["tags"];
-            var version1AddedDictionary = version1Tags.Find(t => t.ContainsValue("Added"));
+            var version1ChangeTypes = (List<Dictionary<string, object>>) version1["changeTypes"];
+            var version1AddedDictionary = version1ChangeTypes.Find(t => t.ContainsValue("Added"));
             var version1AddedChanges = (List<Dictionary<string, object>>) version1AddedDictionary["changes"];
             var version1AddedChangeSummaries = version1AddedChanges.Select(c => c["summary"]);
             var version1AddedChangeReferences = version1AddedChanges.Select(c => c["reference"]);
-            var version1RemovedDictionary = version1Tags.Find(t => t.ContainsValue("Removed"));
+            var version1RemovedDictionary = version1ChangeTypes.Find(t => t.ContainsValue("Removed"));
             var version1RemovedChanges = (List<Dictionary<string, object>>) version1RemovedDictionary["changes"];
             var version1RemovedChangeSummaries = version1RemovedChanges.Select(c => c["summary"]);
             var version1RemovedChangeReferences = version1RemovedChanges.Select(c => c["reference"]);

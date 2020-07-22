@@ -12,8 +12,8 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParserParsesLineWithReferenceSuccessfully()
         {
-            var expectedChange = new OverrideChange("123456", "0.1.0", "Some Tag", "Some Summary", DateTimeOffset.Now.Date, "Some Reference");
-            var line = $"{expectedChange.Id}|{expectedChange.Reference}|{expectedChange.Version}|{expectedChange.Tag}|{expectedChange.Summary}|{expectedChange.Date:yyyy-MM-dd}";
+            var expectedChange = new OverrideChange("123456", "0.1.0", "Some Change Type", "Some Summary", DateTimeOffset.Now.Date, "Some Reference");
+            var line = $"{expectedChange.Id}|{expectedChange.Reference}|{expectedChange.Version}|{expectedChange.ChangeType}|{expectedChange.Summary}|{expectedChange.Date:yyyy-MM-dd}";
             var writer = new StringWriter();
             var parser = new OverrideSourceRowParser(writer);
             var actual = parser.Parse(line);
@@ -24,8 +24,8 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParserParsesLineWithoutReferenceSuccessfully()
         {
-            var expectedChange = new OverrideChange("123456", "0.1.0", "Some Tag", "Some Summary", DateTimeOffset.Now.Date);
-            var line = $"{expectedChange.Id}|{expectedChange.Version}|{expectedChange.Tag}|{expectedChange.Summary}|{expectedChange.Date:yyyy-MM-dd}";
+            var expectedChange = new OverrideChange("123456", "0.1.0", "Some Change Type", "Some Summary", DateTimeOffset.Now.Date);
+            var line = $"{expectedChange.Id}|{expectedChange.Version}|{expectedChange.ChangeType}|{expectedChange.Summary}|{expectedChange.Date:yyyy-MM-dd}";
             var writer = new StringWriter();
             var parser = new OverrideSourceRowParser(writer);
             var actual = parser.Parse(line);
@@ -36,8 +36,8 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParserHandlesTooFewDelimitersIssues()
         {
-            var expectedChange = new OverrideChange("123456", "0.1.0", "Some Tag", "Some Summary", DateTimeOffset.Now.Date);
-            var line = $"{expectedChange.Id}|{expectedChange.Version}{expectedChange.Tag}|{expectedChange.Summary}|{expectedChange.Date:yyyy-MM-dd}";
+            var expectedChange = new OverrideChange("123456", "0.1.0", "Some Change Type", "Some Summary", DateTimeOffset.Now.Date);
+            var line = $"{expectedChange.Id}|{expectedChange.Version}{expectedChange.ChangeType}|{expectedChange.Summary}|{expectedChange.Date:yyyy-MM-dd}";
             var writer = new StringWriter();
             var parser = new OverrideSourceRowParser(writer);
             var actual = parser.Parse(line);
@@ -49,8 +49,8 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParserHandlesTooManyDelimitersIssues()
         {
-            var expectedChange = new OverrideChange("123456", "0.1.0", "Some Tag", "Some Summary", DateTimeOffset.Now.Date);
-            var line = $"{expectedChange.Id}|||{expectedChange.Version}|{expectedChange.Tag}|{expectedChange.Summary}|{expectedChange.Date:yyyy-MM-dd}";
+            var expectedChange = new OverrideChange("123456", "0.1.0", "Some Change Type", "Some Summary", DateTimeOffset.Now.Date);
+            var line = $"{expectedChange.Id}|||{expectedChange.Version}|{expectedChange.ChangeType}|{expectedChange.Summary}|{expectedChange.Date:yyyy-MM-dd}";
             var writer = new StringWriter();
             var parser = new OverrideSourceRowParser(writer);
             var actual = parser.Parse(line);
@@ -62,8 +62,8 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParserHandlesDateFormatIssues()
         {
-            var expectedChange = new OverrideChange("123456", "0.1.0", "Some Tag", "Some Summary", DateTimeOffset.Now.Date);
-            var line = $"{expectedChange.Id}|{expectedChange.Version}|{expectedChange.Tag}|{expectedChange.Summary}|{expectedChange.Date}";
+            var expectedChange = new OverrideChange("123456", "0.1.0", "Some Change Type", "Some Summary", DateTimeOffset.Now.Date);
+            var line = $"{expectedChange.Id}|{expectedChange.Version}|{expectedChange.ChangeType}|{expectedChange.Summary}|{expectedChange.Date}";
             var writer = new StringWriter();
             var parser = new OverrideSourceRowParser(writer);
             var actual = parser.Parse(line);

@@ -1,10 +1,11 @@
+using Gitchanges.Changes;
 using LibGit2Sharp;
 
 namespace Gitchanges.Readers.Parsers
 {
-    public interface ICommitParser<T>
+    public interface ICommitParser
     {
-        T Parse(Commit commit);
-        T Parse(T overrideObject);
+	    IChange Parse(Commit commit);
+	    IChange Parse(IChange overrideObject);
     }
 }

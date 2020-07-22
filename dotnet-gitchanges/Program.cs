@@ -25,8 +25,8 @@ namespace Gitchanges
             public string CustomSettingsPath { get; set; }
             [Option('t', "template", Required = false, HelpText = "Path to custom template file. Overrides value specified in custom settings file.")]
             public string CustomTemplatePath { get; set; }
-            [Option('e', "exclude", Required = false, HelpText = "Comma separated tags to exclude. Overrides value specified in custom settings file.")]
-            public string TagsToExclude { get; set; }
+            [Option('e', "exclude", Required = false, HelpText = "Comma separated change types to exclude. Overrides value specified in custom settings file.")]
+            public string ChangeTypesToExclude { get; set; }
             [Option('m', "minVersion", Required = false, HelpText = "The minimum version of the changelog, will not include changes lower than this version. Overrides value specified in custom settings file.")]
             public string MinVersion { get; set; }
             [Option('r', "repository", Required = false, HelpText = "Path to repository root. Defaults to execution directory. Overrides value specified in custom settings file.")]
@@ -51,8 +51,8 @@ namespace Gitchanges
                         if (!string.IsNullOrEmpty(options.CustomTemplatePath))
                             additionalSettings.Add(new KeyValuePair<string, string>("Template", options.CustomTemplatePath));
                         
-                        if (!string.IsNullOrEmpty(options.TagsToExclude))
-                            additionalSettings.Add(new KeyValuePair<string, string>("TagsToExclude", options.TagsToExclude));
+                        if (!string.IsNullOrEmpty(options.ChangeTypesToExclude))
+                            additionalSettings.Add(new KeyValuePair<string, string>("ChangeTypesToExclude", options.ChangeTypesToExclude));
                         
                         if (!string.IsNullOrEmpty(options.MinVersion))
                             additionalSettings.Add(new KeyValuePair<string, string>("MinVersion", options.MinVersion));
@@ -72,7 +72,7 @@ namespace Gitchanges
                 var template = GetTemplate(appConfig.Template);
                 var repo = TryOrExit(() => new Repository(appConfig.Repository.Path), "Failed to initialize repository");
                 var idToOverrideChange = new Dictionary<string, IChange>();
-                var tagsToExclude = appConfig.TagsToExclude.Split(",");
+                var changeTypesToExclude = appConfig.ChangeTypesToExclude.Split(",");
                 var renderer = new StubbleBuilder().Build();
 
                 if (appConfig.MultiProject)
@@ -95,7 +95,7 @@ namespace Gitchanges
                     readers.Add(gitReader);
                     
                     var generator = new ProjectChangelogGenerator(readers, template, renderer);
-                    var projectToOutput = generator.Generate(appConfig.MinVersion, tagsToExclude);
+                    var projectToOutput = generator.Generate(appConfig.MinVersion, changeTypesToExclude);
 
                     foreach (var (project, output) in projectToOutput)
                     {
@@ -118,7 +118,7 @@ namespace Gitchanges
                         idToOverrideChange = overrideFileReader.Values().ToDictionary<OverrideChange, string, IChange>(change => change.Id, change => change);
                     }
                     Dictionary<string, string> commitShaToTagName = null;
-                    if (appConfig.VersionFromGitTag)
+                    if (UsesTagAsSource(appConfig.Parsing))
                     {
                         commitShaToTagName = new Dictionary<string, string>();
                         foreach (var tag in repo.Tags)
@@ -132,7 +132,7 @@ namespace Gitchanges
                     
                     var cache = new ChangeCache();
                     var generator = new StringChangelogGenerator(readers, cache, template, renderer);
-                    var output = generator.Generate(appConfig.MinVersion, tagsToExclude);
+                    var output = generator.Generate(appConfig.MinVersion, changeTypesToExclude);
                     File.WriteAllText(@"changelog.md", output);
                 }
             }
@@ -168,6 +168,14 @@ namespace Gitchanges
             }
 
             return default;
+        }
+
+        private static bool UsesTagAsSource(ParsingConfig config)
+        {
+            return config.Version.SourceType == ParseableSourceType.Tag ||
+                   config.Reference.SourceType == ParseableSourceType.Tag ||
+                   config.ChangeType.SourceType == ParseableSourceType.Tag ||
+                   config.Project.SourceType == ParseableSourceType.Tag;
         }
     }
 }

@@ -26,10 +26,10 @@ namespace Gitchanges.Readers.Parsers
                 switch(values.Length)
                 {
                     case 5:
-                        change = new OverrideChange(id: values[0], version: values[1], tag: values[2], summary: values[3], date: DateTimeOffset.ParseExact(values[4], DateFormat, CultureInfo.InvariantCulture));
+                        change = new OverrideChange(id: values[0], version: values[1], changeType: values[2], summary: values[3], date: DateTimeOffset.ParseExact(values[4], DateFormat, CultureInfo.InvariantCulture));
                         break;
                     case 6:
-                        change = new OverrideChange(id: values[0], reference: values[1], version: values[2], tag: values[3], summary: values[4], date: DateTimeOffset.ParseExact(values[5], DateFormat, CultureInfo.InvariantCulture));
+                        change = new OverrideChange(id: values[0], reference: values[1], version: values[2], changeType: values[3], summary: values[4], date: DateTimeOffset.ParseExact(values[5], DateFormat, CultureInfo.InvariantCulture));
                         break;
                     default:
                         throw new ArgumentException($"Wrong number of values. Expected 5 or 6 but was {values.Length}");

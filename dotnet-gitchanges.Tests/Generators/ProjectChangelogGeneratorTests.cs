@@ -15,13 +15,13 @@ namespace Gitchanges.Tests.Generators
         private const string Template = @"
 {{#versions}}
 ## [{{version}}] - {{date}}
-{{#tags}}
-### {{tag}}
+{{#changeTypes}}
+### {{changeType}}
 {{#changes}}
 - {{#reference}}[{{{reference}}}] {{/reference}}{{summary}}
 {{/changes}}
 
-{{/tags}}
+{{/changeTypes}}
 {{/versions}}";
         
         [Test]
@@ -146,7 +146,7 @@ namespace Gitchanges.Tests.Generators
         [Test]
         public void VerifyChangelogWithExclusionsIsGenerated()
         {
-            var tagsToExclude = new List<string> {"Removed"};
+            var changeTypesToExclude = new List<string> {"Removed"};
             var now = DateTimeOffset.Now;
             var yesterday = now.AddDays(-1);
             var readerMock = new Mock<IGenericReader<ProjectChange>>();
@@ -192,7 +192,7 @@ namespace Gitchanges.Tests.Generators
 ";
 
             var generator = new ProjectChangelogGenerator(readers, Template, renderer);
-            var projectToActual = generator.Generate(tagsToExclude: tagsToExclude); 
+            var projectToActual = generator.Generate(changeTypesToExclude: changeTypesToExclude); 
             
             Assert.That(projectToActual.GetValueOrDefault(projectA), Is.EqualTo(expectedA));
             Assert.That(projectToActual.GetValueOrDefault(projectB), Is.EqualTo(expectedB));
@@ -201,7 +201,7 @@ namespace Gitchanges.Tests.Generators
         [Test]
         public void VerifyChangelogWithMultipleReadersIsGenerated()
         {
-            var tagsToExclude = new List<string> {"Removed"};
+            var changeTypesToExclude = new List<string> {"Removed"};
             var now = DateTimeOffset.Now;
             var yesterday = now.AddDays(-1);
             var reader1Mock = new Mock<IGenericReader<ProjectChange>>();
@@ -253,7 +253,7 @@ namespace Gitchanges.Tests.Generators
 ";
 
             var generator = new ProjectChangelogGenerator(readers, Template, renderer);
-            var projectToActual = generator.Generate(tagsToExclude: tagsToExclude); 
+            var projectToActual = generator.Generate(changeTypesToExclude: changeTypesToExclude); 
             
             Assert.That(projectToActual.GetValueOrDefault(projectA), Is.EqualTo(expectedA));
             Assert.That(projectToActual.GetValueOrDefault(projectB), Is.EqualTo(expectedB));

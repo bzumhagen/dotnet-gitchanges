@@ -5,26 +5,26 @@ using Gitchanges.Readers.Parsers;
 using LibGit2Sharp;
 using Moq;
 using NUnit.Framework;
+using static Gitchanges.Configuration.ParseableSourceType;
 
 namespace Gitchanges.Tests.Readers.Parsers
 {
     [TestFixture]
     public class ProjectCommitParserTests
     {
-
-        private readonly ParsingPatterns  _defaultPatterns = new ParsingPatterns
+        private readonly ParsingConfig  _defaultParsingConfig = new ParsingConfig
         {
-            Reference = "reference:(.*)[\n]?",
-            Version = "version:(.*)[\n]?",
-            Tag = "tag:(.*)[\n]?",
-            Project = "project:(.*)[\n]?"
+            Reference = new ParseableProperty{ SourceType = Message, Pattern= "reference:(.*)[\n]?", IsOptional = true },
+            Version = new ParseableProperty{ SourceType = Message, Pattern= "version:(.*)[\n]?", IsOptional = false },
+            ChangeType = new ParseableProperty{ SourceType = Message, Pattern= "type:(.*)[\n]?", IsOptional = false },
+            Project = new ParseableProperty{ SourceType = Message, Pattern= "project:(.*)[\n]?", IsOptional = false }
         };
         
         [Test]
         public void VerifyParsesWithProject()
         {
             var expectedChange = new ProjectChange("MyProj", "Unreleased", "Added", "Some Summary", DateTimeOffset.Now);
-            var parser = new ProjectCommitParser(_defaultPatterns);
+            var parser = new ProjectCommitParser(_defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange, expectedChange.Project, expectedChange.Version));
             Assert.That(actual, Is.EqualTo(expectedChange));
@@ -34,7 +34,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         public void VerifyParsesWithoutProject()
         {
             var expectedChange = new ProjectChange("Unused", "Unreleased", "Added", "Some Summary", DateTimeOffset.Now);
-            var parser = new ProjectCommitParser(_defaultPatterns);
+            var parser = new ProjectCommitParser(_defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange, "", expectedChange.Version));
             Assert.That(actual, Is.Null);
@@ -44,7 +44,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         public void VerifyPropagatesNullFromBase()
         {
             var expectedChange = new ProjectChange("MyProj", "Unreleased", "Added", "Some Summary", DateTimeOffset.Now);
-            var parser = new ProjectCommitParser(_defaultPatterns);
+            var parser = new ProjectCommitParser(_defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange, expectedChange.Project, ""));
             Assert.That(actual, Is.Null);
@@ -58,7 +58,7 @@ namespace Gitchanges.Tests.Readers.Parsers
 
 reference: {change.Reference}
 version: {version}
-tag: {change.Tag}
+type: {change.ChangeType}
 project: {project}
 ";
             commitMock.SetupGet(x => x.MessageShort).Returns(change.Summary);

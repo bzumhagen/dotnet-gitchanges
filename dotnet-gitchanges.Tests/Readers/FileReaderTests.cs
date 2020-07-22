@@ -29,7 +29,7 @@ namespace Gitchanges.Tests.Readers
             var mockParser = new Mock<IRowParser<IChange>>();
             foreach (var change in expectedChanges)
             {
-                var line = $"{change.Version}{Delimiter}{change.Tag}{Delimiter}{change.Summary}{Delimiter}{change.Date.ToString(DateFormat)}\n";
+                var line = $"{change.Version}{Delimiter}{change.ChangeType}{Delimiter}{change.Summary}{Delimiter}{change.Date.ToString(DateFormat)}\n";
                 mockParser.Setup(p => p.Parse(line.Trim())).Returns(change);
                 fileContents.Append(line);
             }
@@ -59,7 +59,7 @@ namespace Gitchanges.Tests.Readers
             
             foreach (var change in allChanges)
             {
-                var line = $"{change?.Version}{Delimiter}{change?.Tag}{Delimiter}{change?.Summary}{Delimiter}{change?.Date.ToString(DateFormat)}\n";
+                var line = $"{change?.Version}{Delimiter}{change?.ChangeType}{Delimiter}{change?.Summary}{Delimiter}{change?.Date.ToString(DateFormat)}\n";
                 fileContents.Append(line);
             }
             

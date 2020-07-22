@@ -25,7 +25,7 @@ namespace Gitchanges.Tests.Readers
             };
             var repoMock = new Mock<IRepository>();
             var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == MockCommitEnumerator(expectedChanges));
-            var parserMock = new Mock<ICommitParser<IChange>>();
+            var parserMock = new Mock<ICommitParser>();
             var reader = new GitReader<IChange>(repoMock.Object, parserMock.Object);
 
             repoMock.Setup(r => r.Commits).Returns(commitLog);
@@ -46,7 +46,7 @@ namespace Gitchanges.Tests.Readers
             var twoDaysAgo = DateTimeOffset.Now.AddDays(-2);
             var changes = new List<IChange>
             {
-                new DefaultChange("0.2.0", " ", "Without tag", today),
+                new DefaultChange("0.2.0", " ", "Without change type", today),
                 new DefaultChange(" ", "Added", "WithoutVersion", yesterday),
                 new DefaultChange("0.1.0", "Removed", "Another Summary", twoDaysAgo)
             };
@@ -56,7 +56,7 @@ namespace Gitchanges.Tests.Readers
             };
             var repoMock = new Mock<IRepository>();
             var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == MockCommitEnumerator(changes));
-            var parserMock = new Mock<ICommitParser<IChange>>();
+            var parserMock = new Mock<ICommitParser>();
             var reader = new GitReader<IChange>(repoMock.Object, parserMock.Object);
 
             parserMock.SetupSequence(p => p.Parse(It.IsAny<Commit>()))
@@ -76,7 +76,7 @@ namespace Gitchanges.Tests.Readers
             var yesterday = DateTimeOffset.Now.AddDays(-1);
             var twoDaysAgo = DateTimeOffset.Now.AddDays(-2);
             var badChange = new DefaultChange(" ", "Added", "WithoutVersion", yesterday);
-            var fixedChange = new DefaultChange("0.2.0", badChange.Tag, badChange.Summary, badChange.Date);
+            var fixedChange = new DefaultChange("0.2.0", badChange.ChangeType, badChange.Summary, badChange.Date);
             var fineChange = new DefaultChange("0.1.0", "Removed", "Another Summary", twoDaysAgo);
             var overrides = new Dictionary<string, IChange>
             {
@@ -94,7 +94,7 @@ namespace Gitchanges.Tests.Readers
             };
             var repoMock = new Mock<IRepository>();
             var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == MockCommitEnumerator(changes));
-            var parserMock = new Mock<ICommitParser<IChange>>();
+            var parserMock = new Mock<ICommitParser>();
             parserMock.Setup(p => p.Parse(fixedChange)).Returns(fixedChange);
             parserMock.Setup(p => p.Parse(It.IsAny<Commit>())).Returns(fineChange);
             repoMock.Setup(r => r.Commits).Returns(commitLog);
@@ -120,7 +120,7 @@ namespace Gitchanges.Tests.Readers
 
 reference: {change.Reference}
 version: {change.Version}
-tag: {change.Tag}
+type: {change.ChangeType}
 ";
             commitMock.SetupGet(x => x.MessageShort).Returns(change.Summary);
             commitMock.SetupGet(x => x.Author).Returns(commitAuthor);

@@ -6,7 +6,7 @@ namespace Gitchanges.Changes
     {
         public string Project { get; }
         
-        public ProjectChange(string project, string version, string tag, string summary, DateTimeOffset date, string reference = "") : base(version, tag, summary, date, reference)
+        public ProjectChange(string project, string version, string changeType, string summary, DateTimeOffset date, string reference = "") : base(version, changeType, summary, date, reference)
         {
             Project = EnsureNonEmpty(project, nameof(project));
         }

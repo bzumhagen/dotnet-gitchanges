@@ -17,13 +17,13 @@ namespace Gitchanges.Tests.Generators
         private const string Template = @"
 {{#versions}}
 ## [{{version}}] - {{date}}
-{{#tags}}
-### {{tag}}
+{{#changeTypes}}
+### {{changeType}}
 {{#changes}}
 - {{#reference}}[{{{reference}}}] {{/reference}}{{summary}}
 {{/changes}}
 
-{{/tags}}
+{{/changeTypes}}
 {{/versions}}";
         
         [Test]
@@ -157,7 +157,7 @@ namespace Gitchanges.Tests.Generators
 ";
                     
             var generator = new StringChangelogGenerator(readers, cacheMock.Object, Template, renderer);
-            var actual = generator.Generate(tagsToExclude: toExclude); 
+            var actual = generator.Generate(changeTypesToExclude: toExclude); 
             
             Assert.That(actual, Is.EqualTo(expected));
         }
@@ -213,7 +213,7 @@ namespace Gitchanges.Tests.Generators
 ";
                     
             var generator = new StringChangelogGenerator(readers, cacheMock.Object, Template, renderer);
-            var actual = generator.Generate(tagsToExclude: toExclude); 
+            var actual = generator.Generate(changeTypesToExclude: toExclude); 
             
             Assert.That(actual, Is.EqualTo(expected));
         }
@@ -226,15 +226,15 @@ namespace Gitchanges.Tests.Generators
             foreach (var versionItem in versionLookup.OrderByDescending(v => v.Key))
             {
                 var version = versionItem.Key;
-                var tagLookup = versionItem.ToLookup(c => c.Tag);
+                var changeTypeLookup = versionItem.ToLookup(c => c.ChangeType);
                 var versionDate = DateTimeOffset.MinValue;
-                var tagsList = new List<Dictionary<string, object>>();
-                foreach (var tagItem in tagLookup.OrderBy(t => t.Key))
+                var changeTypeList = new List<Dictionary<string, object>>();
+                foreach (var changeTypeItem in changeTypeLookup.OrderBy(t => t.Key))
                 {
-                    var tag = tagItem.Key;
+                    var changeType = changeTypeItem.Key;
                     var changesList = new List<Dictionary<string, object>>();
                     
-                    foreach (var change in tagItem.OrderByDescending(c => c.Date))
+                    foreach (var change in changeTypeItem.OrderByDescending(c => c.Date))
                     {
                         if (change.Date > versionDate) versionDate = change.Date;
                         
@@ -244,9 +244,9 @@ namespace Gitchanges.Tests.Generators
                             {"reference", change.Reference}
                         });
                     }
-                    tagsList.Add(new Dictionary<string, object>()
+                    changeTypeList.Add(new Dictionary<string, object>()
                     {
-                        {"tag", tag},
+                        {"changeType", changeType},
                         {"changes", changesList}
                     });
                 }
@@ -254,7 +254,7 @@ namespace Gitchanges.Tests.Generators
                 {
                     {"version", version},
                     {"date", versionDate.ToString("yyyy-MM-dd")},
-                    {"tags", tagsList}
+                    {"changeTypes", changeTypeList}
                 });
             }
             retVal.Add("versions", versionList);

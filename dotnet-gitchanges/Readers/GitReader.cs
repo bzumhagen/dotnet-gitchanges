@@ -6,13 +6,13 @@ using LibGit2Sharp;
 
 namespace Gitchanges.Readers
 {
-    public class GitReader<T> : IGenericReader<T>
+    public class GitReader<T> : IGenericReader<T> where T : IChange
     {
         private readonly IRepository _repository;
-        private readonly ICommitParser<T> _parser;
+        private readonly ICommitParser _parser;
         private readonly Dictionary<string, T> _idToOverrideObject;
         
-        public GitReader(IRepository repository, ICommitParser<T> parser, Dictionary<string, T> idToOverrideObject = null)
+        public GitReader(IRepository repository, ICommitParser parser, Dictionary<string, T> idToOverrideObject = null)
         {
             _repository = repository;
             _parser = parser;
@@ -29,7 +29,7 @@ namespace Gitchanges.Readers
                     {
                         var result = _idToOverrideObject.TryGetValue(commit.Id.ToString(), out var overrideObject) ? _parser.Parse(overrideObject) : _parser.Parse(commit);
                         if (result == null) continue;
-                        yield return result;
+                        yield return (T) result;
                     }
                 }
                 else
@@ -38,7 +38,7 @@ namespace Gitchanges.Readers
                     {
                         var change = _parser.Parse(commit);
                         if (change == null) continue;
-                        yield return change;
+                        yield return (T) change;
                     }
                 }
             }

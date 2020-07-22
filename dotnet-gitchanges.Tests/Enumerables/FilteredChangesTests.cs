@@ -26,17 +26,17 @@ namespace Gitchanges.Tests.Enumerables
         }
         
         [Test]
-        public void VerifyEnumeratorSkipsExcludedTags()
+        public void VerifyEnumeratorSkipsExcludedChangeTypes()
         {
             var now = DateTimeOffset.Now;
-            var excludedTag = "Maintenance";
+            var excludedChangeType = "Maintenance";
             var changeVersion2 = new DefaultChange("2.0.0", "Added", "Some 2.0.0 Summary", now);
-            var changeVersion1Pt5 = new DefaultChange("1.5.0", excludedTag, "Some 1.5.0 Summary", now.AddDays(-1));
+            var changeVersion1Pt5 = new DefaultChange("1.5.0", excludedChangeType, "Some 1.5.0 Summary", now.AddDays(-1));
             var changeVersion1 = new DefaultChange("1.0.0", "Added", "Some 1.0.0 Summary", now.AddDays(-2));
             var changes = new List<IChange> {changeVersion2, changeVersion1Pt5, changeVersion1};
             var expectedChanges = new List<IChange> {changeVersion2, changeVersion1};
             
-            var filteredChanges = new FilteredChanges<IChange>(changes, null, new List<string> {excludedTag});
+            var filteredChanges = new FilteredChanges<IChange>(changes, null, new List<string> {excludedChangeType});
             
             Assert.That(filteredChanges, Is.EquivalentTo(expectedChanges));
         }
