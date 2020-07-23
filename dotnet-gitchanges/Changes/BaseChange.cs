@@ -4,15 +4,15 @@ namespace Gitchanges.Changes
 {
     public abstract class BaseChange : IChange
     {
-        public string Version { get; }
+        public ChangeVersion Version { get; }
         public string ChangeType { get; }
         public string Summary { get; }
         public DateTimeOffset Date { get; }
         public string Reference { get; }
 
-        protected BaseChange(string version, string changeType, string summary, DateTimeOffset date, string reference = "")
+        protected BaseChange(ChangeVersion version, string changeType, string summary, DateTimeOffset date, string reference = "")
         {
-            Version = EnsureNonEmpty(version, nameof(version));
+            Version = version;
             ChangeType = EnsureNonEmpty(changeType, nameof(changeType));
             Summary = EnsureNonEmpty(summary, nameof(summary));
             Date = EnsureNonNull(date, nameof(date));
@@ -42,7 +42,7 @@ namespace Gitchanges.Changes
         
         protected bool Equals(BaseChange other)
         {
-            return Version == other.Version && ChangeType == other.ChangeType && Summary == other.Summary && Date.Equals(other.Date) && Reference == other.Reference;
+            return Version.Equals(other.Version) && ChangeType == other.ChangeType && Summary == other.Summary && Date.Equals(other.Date) && Reference == other.Reference;
         }
 
         protected static T EnsureNonNull<T>(T obj, string name)

@@ -23,8 +23,8 @@ namespace Gitchanges.Tests.Readers
             var fileContents = new StringBuilder();
             var expectedChanges = new List<IChange>
             {
-                new DefaultChange("0.2.0", "Added", "Some Summary", DateTimeOffset.Now.Date),
-                new DefaultChange("0.1.0", "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1).Date)
+                new DefaultChange(new ChangeVersion("0.2.0"), "Added", "Some Summary", DateTimeOffset.Now.Date),
+                new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1).Date)
             };
             var mockParser = new Mock<IRowParser<IChange>>();
             foreach (var change in expectedChanges)
@@ -47,8 +47,8 @@ namespace Gitchanges.Tests.Readers
             var fileContents = new StringBuilder();
             var allChanges = new List<IChange>
             {
-                new DefaultChange("0.2.0", "Added", "Some Summary", DateTimeOffset.Now.Date),
-                new DefaultChange("0.1.0", "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1).Date)
+                new DefaultChange(new ChangeVersion("0.2.0"), "Added", "Some Summary", DateTimeOffset.Now.Date),
+                new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1).Date)
             };
             var expectedChanges = new List<IChange>
             {

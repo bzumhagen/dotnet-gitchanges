@@ -34,12 +34,12 @@ namespace Gitchanges.Readers.Parsers
 
             version = HandleVersion(version);
                 
-            return new DefaultChange(version, changeType, commit.MessageShort, commit.Author.When, reference);
+            return new DefaultChange(new ChangeVersion(version), changeType, commit.MessageShort, commit.Author.When, reference);
         }
 
         public IChange Parse(IChange overrideObject)
         {
-            HandleVersion(overrideObject.Version);
+            HandleVersion(overrideObject.Version.ToString());
             return overrideObject;
         }
 

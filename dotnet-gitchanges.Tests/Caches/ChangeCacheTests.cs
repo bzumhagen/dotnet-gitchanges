@@ -17,8 +17,8 @@ namespace Gitchanges.Tests.Caches
             var today = DateTime.Today;
             var expectedChanges = new List<IChange>
             {
-                new DefaultChange("0.1.0", "Added", "This is a change", today, "REL-1234"),
-                new DefaultChange("0.1.0", "Added", "This is another change", today, "REL-1235")
+                new DefaultChange(new ChangeVersion("0.1.0"), "Added", "This is a change", today, "REL-1234"),
+                new DefaultChange(new ChangeVersion("0.1.0"), "Added", "This is another change", today, "REL-1235")
             };
             var expectedChangeKey = new ChangeCache.ChangeKey(expectedChanges.First());
             
@@ -35,8 +35,8 @@ namespace Gitchanges.Tests.Caches
         public void VerifyMultipleChangesWithDifferentKeysAddedSuccessfully()
         {
             var today = DateTime.Today;
-            var expectedChange1 = new DefaultChange("0.1.0", "Added", "This is a change", today, "REL-1234");
-            var expectedChange2 = new DefaultChange("0.1.0", "Removed", "This is a change", today, "REL-1235");
+            var expectedChange1 = new DefaultChange(new ChangeVersion("0.1.0"), "Added", "This is a change", today, "REL-1234");
+            var expectedChange2 = new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "This is a change", today, "REL-1235");
             var expectedChangeKey1 = new ChangeCache.ChangeKey(expectedChange1);
             var expectedChangeKey2 = new ChangeCache.ChangeKey(expectedChange2);
             
@@ -58,12 +58,12 @@ namespace Gitchanges.Tests.Caches
         [Test]
         public void VerifyGetAsValueDictionaryIsSuccessful()
         {
-            var expectedChange1 = new DefaultChange("0.2.0", "Added", "This is the latest 0.2.0", DateTime.Today, "REL-1231");
-            var expectedChange2 = new DefaultChange("0.2.0", "Removed", "This is the middle 0.2.0", DateTime.Today.AddHours(-2), "REL-1232");
-            var expectedChange3 = new DefaultChange("0.2.0", "Removed", "This is the earliest 0.2.0", DateTime.Today.AddHours(-3), "REL-1233");
-            var expectedChange4 = new DefaultChange("0.1.0", "Added", "This is a change", DateTime.Today.AddDays(-1), "REL-1234");
-            var expectedChange5 = new DefaultChange("0.1.0", "Removed", "This is the middle 0.1.0", DateTime.Today.AddDays(-2), "REL-1235");
-            var expectedChange6 = new DefaultChange("0.1.0", "Removed", "This is the earliest 0.1.0", DateTime.Today.AddDays(-3), "REL-1236");
+            var expectedChange1 = new DefaultChange(new ChangeVersion("0.2.0"), "Added", "This is the latest 0.2.0", DateTime.Today, "REL-1231");
+            var expectedChange2 = new DefaultChange(new ChangeVersion("0.2.0"), "Removed", "This is the middle 0.2.0", DateTime.Today.AddHours(-2), "REL-1232");
+            var expectedChange3 = new DefaultChange(new ChangeVersion("0.2.0"), "Removed", "This is the earliest 0.2.0", DateTime.Today.AddHours(-3), "REL-1233");
+            var expectedChange4 = new DefaultChange(new ChangeVersion("0.1.0"), "Added", "This is a change", DateTime.Today.AddDays(-1), "REL-1234");
+            var expectedChange5 = new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "This is the middle 0.1.0", DateTime.Today.AddDays(-2), "REL-1235");
+            var expectedChange6 = new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "This is the earliest 0.1.0", DateTime.Today.AddDays(-3), "REL-1236");
             
             var changeCache = new ChangeCache();
 
@@ -71,7 +71,7 @@ namespace Gitchanges.Tests.Caches
 
             var actualValueDictionary = changeCache.GetAsValueDictionary();
             var actualVersions = (List<Dictionary<string, object>>) actualValueDictionary["versions"];
-            var version2 = actualVersions.Find(v => v.ContainsValue("0.2.0"));
+            var version2 = actualVersions.Find(v => v.ContainsValue(new ChangeVersion("0.2.0")));
             var version2ChangeTypes = (List<Dictionary<string, object>>) version2["changeTypes"];
             var version2AddedDictionary = version2ChangeTypes.Find(t => t.ContainsValue("Added"));
             var version2AddedChanges = (List<Dictionary<string, object>>) version2AddedDictionary["changes"];
@@ -88,7 +88,7 @@ namespace Gitchanges.Tests.Caches
             Assert.That(version2RemovedChangeSummaries, Is.EquivalentTo(new List<string>{expectedChange2.Summary, expectedChange3.Summary}));
             Assert.That(version2RemovedChangeReferences, Is.EquivalentTo(new List<string>{expectedChange2.Reference, expectedChange3.Reference}));
             
-            var version1 = actualVersions.Find(v => v.ContainsValue("0.1.0"));
+            var version1 = actualVersions.Find(v => v.ContainsValue(new ChangeVersion("0.1.0")));
             var version1ChangeTypes = (List<Dictionary<string, object>>) version1["changeTypes"];
             var version1AddedDictionary = version1ChangeTypes.Find(t => t.ContainsValue("Added"));
             var version1AddedChanges = (List<Dictionary<string, object>>) version1AddedDictionary["changes"];
@@ -104,6 +104,46 @@ namespace Gitchanges.Tests.Caches
             Assert.That(version1AddedChangeReferences, Is.EquivalentTo(new List<string>{expectedChange4.Reference}));
             Assert.That(version1RemovedChangeSummaries, Is.EquivalentTo(new List<string>{expectedChange5.Summary, expectedChange6.Summary}));
             Assert.That(version1RemovedChangeReferences, Is.EquivalentTo(new List<string>{expectedChange5.Reference, expectedChange6.Reference}));
+        }
+        
+        [Test]
+        public void VerifyGetAsValueDictionaryVersionOrderingIsDescending()
+        {
+            var expectedChange1 = new DefaultChange(new ChangeVersion("0.2.0"), "Added", "This is the latest 0.2.0", DateTime.Today, "REL-1231");
+            var expectedChange2 = new DefaultChange(new ChangeVersion("0.2.0"), "Removed", "This is the middle 0.2.0", DateTime.Today.AddHours(-2), "REL-1232");
+            var expectedChange3 = new DefaultChange(new ChangeVersion("0.2.0"), "Removed", "This is the earliest 0.2.0", DateTime.Today.AddHours(-3), "REL-1233");
+            var expectedChange4 = new DefaultChange(new ChangeVersion("0.1.0"), "Added", "This is a change", DateTime.Today.AddDays(-1), "REL-1234");
+            var expectedChange5 = new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "This is the middle 0.1.0", DateTime.Today.AddDays(-2), "REL-1235");
+            var expectedChange6 = new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "This is the earliest 0.1.0", DateTime.Today.AddDays(-3), "REL-1236");
+            
+            var changeCache = new ChangeCache();
+
+            changeCache.Add(new List<IChange> {expectedChange1, expectedChange2, expectedChange3, expectedChange4, expectedChange5,  expectedChange6});
+
+            var actualValueDictionary = changeCache.GetAsValueDictionary();
+            var actualVersions = (List<Dictionary<string, object>>) actualValueDictionary["versions"];
+            Assert.That(actualVersions[0]["version"], Is.EqualTo(expectedChange1.Version));
+            Assert.That(actualVersions[1]["version"], Is.EqualTo(expectedChange4.Version));
+        }
+        
+        [Test]
+        public void VerifyGetAsValueDictionaryVersionOrderingIsDescendingMixedDigits()
+        {
+            var expectedChange1 = new DefaultChange(new ChangeVersion("0.10.0"), "Added", "This is the latest 0.10.0", DateTime.Today, "REL-1231");
+            var expectedChange2 = new DefaultChange(new ChangeVersion("0.10.0"), "Removed", "This is the middle 0.10.0", DateTime.Today.AddHours(-2), "REL-1232");
+            var expectedChange3 = new DefaultChange(new ChangeVersion("0.10.0"), "Removed", "This is the earliest 0.10.0", DateTime.Today.AddHours(-3), "REL-1233");
+            var expectedChange4 = new DefaultChange(new ChangeVersion("0.9.0"), "Added", "This is a change", DateTime.Today.AddDays(-1), "REL-1234");
+            var expectedChange5 = new DefaultChange(new ChangeVersion("0.9.0"), "Removed", "This is the middle 0.9.0", DateTime.Today.AddDays(-2), "REL-1235");
+            var expectedChange6 = new DefaultChange(new ChangeVersion("0.9.0"), "Removed", "This is the earliest 0.9.0", DateTime.Today.AddDays(-3), "REL-1236");
+            
+            var changeCache = new ChangeCache();
+
+            changeCache.Add(new List<IChange> {expectedChange1, expectedChange2, expectedChange3, expectedChange4, expectedChange5,  expectedChange6});
+
+            var actualValueDictionary = changeCache.GetAsValueDictionary();
+            var actualVersions = (List<Dictionary<string, object>>) actualValueDictionary["versions"];
+            Assert.That(actualVersions[0]["version"], Is.EqualTo(expectedChange1.Version));
+            Assert.That(actualVersions[1]["version"], Is.EqualTo(expectedChange4.Version));
         }
     }
 }

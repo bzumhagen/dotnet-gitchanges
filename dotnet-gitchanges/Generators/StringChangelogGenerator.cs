@@ -24,7 +24,7 @@ namespace Gitchanges.Generators
             _renderer = renderer;
         }
         
-        public string Generate(string minVersion = null, IEnumerable<string> changeTypesToExclude = null)
+        public string Generate(ChangeVersion minVersion = null, IEnumerable<string> changeTypesToExclude = null)
         {
             var toExclude = changeTypesToExclude?.ToList() ?? new List<string>();
             foreach(var reader in _readers)

@@ -4,7 +4,7 @@ namespace Gitchanges.Changes
 {
     public interface IChange
     {
-        string Version { get; }
+        ChangeVersion Version { get; }
         string ChangeType { get; }
         string Summary { get; }
         DateTimeOffset Date { get; }

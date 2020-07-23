@@ -12,7 +12,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParserParsesLineWithReferenceSuccessfully()
         {
-            var expectedChange = new OverrideProjectChange("MyProj", "123456", "0.1.0", "Some Change Type", "Some Summary", DateTimeOffset.Now.Date, "Some Reference");
+            var expectedChange = new OverrideProjectChange("MyProj", "123456", new ChangeVersion("0.1.0"), "Some Change Type", "Some Summary", DateTimeOffset.Now.Date, "Some Reference");
             var line = $"{expectedChange.Id}|{expectedChange.Project}|{expectedChange.Reference}|{expectedChange.Version}|{expectedChange.ChangeType}|{expectedChange.Summary}|{expectedChange.Date:yyyy-MM-dd}";
             var writer = new StringWriter();
             var parser = new OverrideProjectSourceRowParser(writer);
@@ -24,7 +24,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParserParsesLineWithoutReferenceSuccessfully()
         {
-            var expectedChange = new OverrideProjectChange("MyProj", "123456", "0.1.0", "Some Change Type", "Some Summary", DateTimeOffset.Now.Date);
+            var expectedChange = new OverrideProjectChange("MyProj", "123456", new ChangeVersion("0.1.0"), "Some Change Type", "Some Summary", DateTimeOffset.Now.Date);
             var line = $"{expectedChange.Id}|{expectedChange.Project}|{expectedChange.Version}|{expectedChange.ChangeType}|{expectedChange.Summary}|{expectedChange.Date:yyyy-MM-dd}";
             var writer = new StringWriter();
             var parser = new OverrideProjectSourceRowParser(writer);
@@ -36,7 +36,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParserHandlesTooFewDelimitersIssues()
         {
-            var expectedChange = new OverrideProjectChange("MyProj", "123456", "0.1.0", "Some Change Type", "Some Summary", DateTimeOffset.Now.Date);
+            var expectedChange = new OverrideProjectChange("MyProj", "123456", new ChangeVersion("0.1.0"), "Some Change Type", "Some Summary", DateTimeOffset.Now.Date);
             var line = $"{expectedChange.Id}|{expectedChange.Project}|{expectedChange.Version}{expectedChange.ChangeType}|{expectedChange.Summary}|{expectedChange.Date:yyyy-MM-dd}";
             var writer = new StringWriter();
             var parser = new OverrideProjectSourceRowParser(writer);
@@ -49,7 +49,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParserHandlesTooManyDelimitersIssues()
         {
-            var expectedChange = new OverrideProjectChange("MyProj", "123456", "0.1.0", "Some Change Type", "Some Summary", DateTimeOffset.Now.Date);
+            var expectedChange = new OverrideProjectChange("MyProj", "123456", new ChangeVersion("0.1.0"), "Some Change Type", "Some Summary", DateTimeOffset.Now.Date);
             var line = $"{expectedChange.Id}|{expectedChange.Project}|||{expectedChange.Version}|{expectedChange.ChangeType}|{expectedChange.Summary}|{expectedChange.Date:yyyy-MM-dd}";
             var writer = new StringWriter();
             var parser = new OverrideProjectSourceRowParser(writer);
@@ -62,7 +62,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParserHandlesDateFormatIssues()
         {
-            var expectedChange = new OverrideProjectChange("MyProj", "123456", "0.1.0", "Some Change Type", "Some Summary", DateTimeOffset.Now.Date);
+            var expectedChange = new OverrideProjectChange("MyProj", "123456", new ChangeVersion("0.1.0"), "Some Change Type", "Some Summary", DateTimeOffset.Now.Date);
             var line = $"{expectedChange.Id}|{expectedChange.Project}|{expectedChange.Version}|{expectedChange.ChangeType}|{expectedChange.Summary}|{expectedChange.Date}";
             var writer = new StringWriter();
             var parser = new OverrideProjectSourceRowParser(writer);

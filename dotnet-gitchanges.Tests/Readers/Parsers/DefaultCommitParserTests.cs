@@ -26,7 +26,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         {
             var gitTags = new Dictionary<string, string>();
             gitTags.Add("THISCOULDBEASHA", "0.0.0");
-            var expectedChange = new DefaultChange("0.0.0", "Added", "Some Summary", DateTimeOffset.Now);
+            var expectedChange = new DefaultChange(new ChangeVersion("0.0.0"), "Added", "Some Summary", DateTimeOffset.Now);
             var parser = new DefaultCommitParser(_defaultParsingConfig, gitTags);
 
             var actual = parser.Parse(MockCommit(expectedChange));
@@ -38,7 +38,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         {
             var gitTags = new Dictionary<string, string>();
             gitTags.Add("THISCOULDBEASHA_OTHER", "0.0.0");
-            var expectedChange = new DefaultChange("Unreleased", "Added", "Some Summary", DateTimeOffset.Now);
+            var expectedChange = new DefaultChange(new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now);
             var parser = new DefaultCommitParser(_defaultParsingConfig, gitTags);
 
             var actual = parser.Parse(MockCommit(expectedChange));
@@ -48,7 +48,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParsesWithoutReference()
         {
-            var expectedChange = new DefaultChange("Unreleased", "Added", "Some Summary", DateTimeOffset.Now);
+            var expectedChange = new DefaultChange(new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now);
             var parser = new DefaultCommitParser(_defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange));
@@ -58,7 +58,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParsesWithReference()
         {
-            var expectedChange = new DefaultChange("Unreleased", "Added", "Some Summary", DateTimeOffset.Now, "REF-1234");
+            var expectedChange = new DefaultChange(new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now, "REF-1234");
             var parser = new DefaultCommitParser(_defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange));
@@ -68,7 +68,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyUnreleasedCommitsHaveUnreleasedVersion()
         {
-            var expectedChange = new DefaultChange("Unreleased", "Added", "Some Summary", DateTimeOffset.Now);
+            var expectedChange = new DefaultChange(new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now);
             var parser = new DefaultCommitParser(_defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange));
@@ -78,8 +78,8 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyReleasedCommitsWithUnreleasedInVersionHaveCorrectVersion()
         {
-            var releasedChange = new DefaultChange("2.0.0", "Added", "Some Released Summary", DateTimeOffset.Now);
-            var unreleasedChange = new DefaultChange("Unreleased", "Added", "Some Unreleased Summary", DateTimeOffset.Now);
+            var releasedChange = new DefaultChange(new ChangeVersion("2.0.0"), "Added", "Some Released Summary", DateTimeOffset.Now);
+            var unreleasedChange = new DefaultChange(new ChangeVersion("Unreleased"), "Added", "Some Unreleased Summary", DateTimeOffset.Now);
             var parser = new DefaultCommitParser(_defaultParsingConfig);
 
             parser.Parse(MockCommit(releasedChange));
@@ -95,8 +95,8 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyCommitsWithUnreleasedInVersionHaveCorrectVersionWhenPrecededByExplicitChange()
         {
-            var explicitChange = new DefaultChange("2.0.0", "Added", "Some Released Summary", DateTimeOffset.Now);
-            var unreleasedChange = new DefaultChange("Unreleased", "Added", "Some Unreleased Summary", DateTimeOffset.Now);
+            var explicitChange = new DefaultChange(new ChangeVersion("2.0.0"), "Added", "Some Released Summary", DateTimeOffset.Now);
+            var unreleasedChange = new DefaultChange(new ChangeVersion("Unreleased"), "Added", "Some Unreleased Summary", DateTimeOffset.Now);
             var parser = new DefaultCommitParser(_defaultParsingConfig);
 
             parser.Parse(explicitChange);

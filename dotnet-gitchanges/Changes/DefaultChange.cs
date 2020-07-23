@@ -4,7 +4,7 @@ namespace Gitchanges.Changes
 {
     public class DefaultChange : BaseChange
     {
-        public DefaultChange(string version, string changeType, string summary, DateTimeOffset date, string reference = "") : base(version, changeType, summary, date, reference){}
+        public DefaultChange(ChangeVersion version, string changeType, string summary, DateTimeOffset date, string reference = "") : base(version, changeType, summary, date, reference){}
 
         public override string ToString()
         {

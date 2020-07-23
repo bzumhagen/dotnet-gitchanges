@@ -25,7 +25,7 @@ namespace Gitchanges.Readers.Parsers
 
             version = HandleVersion(version);
             
-            return new ProjectChange(project, version, changeType, commit.MessageShort, commit.Author.When, reference);
+            return new ProjectChange(project, new ChangeVersion(version), changeType, commit.MessageShort, commit.Author.When, reference);
         }
     }
 }

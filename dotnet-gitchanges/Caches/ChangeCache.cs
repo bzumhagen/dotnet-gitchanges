@@ -9,7 +9,7 @@ namespace Gitchanges.Caches
     {
         public class ChangeKey
         {
-            public string Version { get; }
+            public ChangeVersion Version { get; }
             public string ChangeType { get; }
 
             public ChangeKey(IChange change)
@@ -19,7 +19,7 @@ namespace Gitchanges.Caches
             }
             protected bool Equals(ChangeKey other)
             {
-                return Version == other.Version && ChangeType == other.ChangeType;
+                return Version.Equals(other.Version) && ChangeType == other.ChangeType;
             }
 
             public override bool Equals(object obj)
@@ -50,7 +50,7 @@ namespace Gitchanges.Caches
         {
             var retVal = new Dictionary<string, object>();
             var versionList = new List<Dictionary<string, object>>();
-            Dictionary<string, Dictionary<string, IEnumerable<IChange>>> versionGroups =
+            Dictionary<ChangeVersion, Dictionary<string, IEnumerable<IChange>>> versionGroups =
                 ChangeKeyToChanges
                     .GroupBy(pair => pair.Key.Version)
                     .ToDictionary(group => group.Key, group => 

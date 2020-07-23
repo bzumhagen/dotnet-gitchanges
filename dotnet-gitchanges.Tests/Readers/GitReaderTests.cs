@@ -20,8 +20,8 @@ namespace Gitchanges.Tests.Readers
         {
             var expectedChanges = new List<IChange>
             {
-                new DefaultChange("0.2.0", "Added", "Some Summary", DateTimeOffset.Now),
-                new DefaultChange("0.1.0", "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1))
+                new DefaultChange(new ChangeVersion("0.2.0"), "Added", "Some Summary", DateTimeOffset.Now),
+                new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "Another Summary", DateTimeOffset.Now.AddDays(-1))
             };
             var repoMock = new Mock<IRepository>();
             var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == MockCommitEnumerator(expectedChanges));
@@ -46,13 +46,13 @@ namespace Gitchanges.Tests.Readers
             var twoDaysAgo = DateTimeOffset.Now.AddDays(-2);
             var changes = new List<IChange>
             {
-                new DefaultChange("0.2.0", " ", "Without change type", today),
-                new DefaultChange(" ", "Added", "WithoutVersion", yesterday),
-                new DefaultChange("0.1.0", "Removed", "Another Summary", twoDaysAgo)
+                new DefaultChange(new ChangeVersion("0.2.0"), " ", "Without change type", today),
+                new DefaultChange(new ChangeVersion(" "), "Added", "WithoutVersion", yesterday),
+                new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "Another Summary", twoDaysAgo)
             };
             var expectedChanges = new List<IChange>
             {
-                new DefaultChange("0.1.0", "Removed", "Another Summary", twoDaysAgo)
+                new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "Another Summary", twoDaysAgo)
             };
             var repoMock = new Mock<IRepository>();
             var commitLog = Mock.Of<IQueryableCommitLog>(cl => cl.GetEnumerator() == MockCommitEnumerator(changes));
@@ -75,9 +75,9 @@ namespace Gitchanges.Tests.Readers
         {
             var yesterday = DateTimeOffset.Now.AddDays(-1);
             var twoDaysAgo = DateTimeOffset.Now.AddDays(-2);
-            var badChange = new DefaultChange(" ", "Added", "WithoutVersion", yesterday);
-            var fixedChange = new DefaultChange("0.2.0", badChange.ChangeType, badChange.Summary, badChange.Date);
-            var fineChange = new DefaultChange("0.1.0", "Removed", "Another Summary", twoDaysAgo);
+            var badChange = new DefaultChange(new ChangeVersion(" "), "Added", "WithoutVersion", yesterday);
+            var fixedChange = new DefaultChange(new ChangeVersion("0.2.0"), badChange.ChangeType, badChange.Summary, badChange.Date);
+            var fineChange = new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "Another Summary", twoDaysAgo);
             var overrides = new Dictionary<string, IChange>
             {
                 {ToSha1String(badChange), fixedChange}

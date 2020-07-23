@@ -22,7 +22,7 @@ namespace Gitchanges.Generators
             _renderer = renderer;
         }
         
-        public Dictionary<string, string> Generate(string minVersion = null, IEnumerable<string> changeTypesToExclude = null)
+        public Dictionary<string, string> Generate(ChangeVersion minVersion = null, IEnumerable<string> changeTypesToExclude = null)
         {
             var projectToCache = new Dictionary<string, IChangeCache>();
             var projectToOutput = new Dictionary<string, string>();

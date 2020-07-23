@@ -74,6 +74,7 @@ namespace Gitchanges
                 var idToOverrideChange = new Dictionary<string, IChange>();
                 var changeTypesToExclude = appConfig.ChangeTypesToExclude.Split(",");
                 var renderer = new StubbleBuilder().Build();
+                var minVersion = string.IsNullOrEmpty(appConfig.MinVersion) ? null : new ChangeVersion(appConfig.MinVersion);
 
                 if (appConfig.MultiProject)
                 {
@@ -95,7 +96,7 @@ namespace Gitchanges
                     readers.Add(gitReader);
                     
                     var generator = new ProjectChangelogGenerator(readers, template, renderer);
-                    var projectToOutput = generator.Generate(appConfig.MinVersion, changeTypesToExclude);
+                    var projectToOutput = generator.Generate(minVersion, changeTypesToExclude);
 
                     foreach (var (project, output) in projectToOutput)
                     {
@@ -132,7 +133,7 @@ namespace Gitchanges
                     
                     var cache = new ChangeCache();
                     var generator = new StringChangelogGenerator(readers, cache, template, renderer);
-                    var output = generator.Generate(appConfig.MinVersion, changeTypesToExclude);
+                    var output = generator.Generate(minVersion, changeTypesToExclude);
                     File.WriteAllText(@"changelog.md", output);
                 }
             }

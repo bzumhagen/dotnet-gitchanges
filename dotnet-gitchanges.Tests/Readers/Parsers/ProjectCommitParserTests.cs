@@ -23,7 +23,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParsesWithProject()
         {
-            var expectedChange = new ProjectChange("MyProj", "Unreleased", "Added", "Some Summary", DateTimeOffset.Now);
+            var expectedChange = new ProjectChange("MyProj", new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now);
             var parser = new ProjectCommitParser(_defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange, expectedChange.Project, expectedChange.Version));
@@ -33,7 +33,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyParsesWithoutProject()
         {
-            var expectedChange = new ProjectChange("Unused", "Unreleased", "Added", "Some Summary", DateTimeOffset.Now);
+            var expectedChange = new ProjectChange("Unused", new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now);
             var parser = new ProjectCommitParser(_defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange, "", expectedChange.Version));
@@ -43,14 +43,14 @@ namespace Gitchanges.Tests.Readers.Parsers
         [Test]
         public void VerifyPropagatesNullFromBase()
         {
-            var expectedChange = new ProjectChange("MyProj", "Unreleased", "Added", "Some Summary", DateTimeOffset.Now);
+            var expectedChange = new ProjectChange("MyProj", new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now);
             var parser = new ProjectCommitParser(_defaultParsingConfig);
 
-            var actual = parser.Parse(MockCommit(expectedChange, expectedChange.Project, ""));
+            var actual = parser.Parse(MockCommit(expectedChange, expectedChange.Project));
             Assert.That(actual, Is.Null);
         }
         
-        private static Commit MockCommit(IChange change, string project = "", string version = "")
+        private static Commit MockCommit(IChange change, string project = "", ChangeVersion version = null)
         {
             var commitMock = new Mock<Commit>();
             var commitAuthor = new Signature("Some Author", "Some Email", change.Date);

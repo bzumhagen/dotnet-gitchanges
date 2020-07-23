@@ -40,10 +40,10 @@ namespace Gitchanges.Tests.Generators
             };
             var expectedChanges = new List<IChange>
             {
-                new DefaultChange("1.0.0", "Added", "Added some other change", now),
-                new DefaultChange("1.0.0", "Removed", "Removed some other change", now),
-                new DefaultChange("0.1.0", "Added", "Added some change", yesterday),
-                new DefaultChange("0.1.0", "Removed", "Removed some change", yesterday),
+                new DefaultChange(new ChangeVersion("1.0.0"), "Added", "Added some other change", now),
+                new DefaultChange(new ChangeVersion("1.0.0"), "Removed", "Removed some other change", now),
+                new DefaultChange(new ChangeVersion("0.1.0"), "Added", "Added some change", yesterday),
+                new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "Removed some change", yesterday),
             };
             var expectedValueDictionary = ToValueDictionary(expectedChanges);
             readerMock.Setup(r => r.Values()).Returns(expectedChanges);
@@ -76,7 +76,7 @@ namespace Gitchanges.Tests.Generators
         [Test]
         public void VerifyMinVersionChangelogIsGenerated()
         {
-            var minVersion = "1.0.0";
+            var minVersion = new ChangeVersion("1.0.0");
             var now = DateTimeOffset.Now;
             var yesterday = now.AddDays(-1);
             var readerMock = new Mock<IGenericReader<IChange>>();
@@ -88,13 +88,13 @@ namespace Gitchanges.Tests.Generators
             };
             var expectedChanges = new List<IChange>
             {
-                new DefaultChange("1.0.0", "Added", "Added some other change", now),
-                new DefaultChange("1.0.0", "Removed", "Removed some other change", now)
+                new DefaultChange(new ChangeVersion("1.0.0"), "Added", "Added some other change", now),
+                new DefaultChange(new ChangeVersion("1.0.0"), "Removed", "Removed some other change", now)
             };
             var allChanges = new List<IChange>(expectedChanges)
             {
-                new DefaultChange("0.1.0", "Added", "Added some change", yesterday),
-                new DefaultChange("0.1.0", "Removed", "Removed some change", yesterday)
+                new DefaultChange(new ChangeVersion("0.1.0"), "Added", "Added some change", yesterday),
+                new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "Removed some change", yesterday)
             };
             var expectedValueDictionary = ToValueDictionary(expectedChanges);
             readerMock.Setup(r => r.Values()).Returns(allChanges);
@@ -132,13 +132,13 @@ namespace Gitchanges.Tests.Generators
             };
             var expectedChanges = new List<IChange>
             {
-                new DefaultChange("1.0.0", "Added", "Added some other change", now),
-                new DefaultChange("0.1.0", "Added", "Added some change", yesterday),
+                new DefaultChange(new ChangeVersion("1.0.0"), "Added", "Added some other change", now),
+                new DefaultChange(new ChangeVersion("0.1.0"), "Added", "Added some change", yesterday),
             };
             var allChanges = new List<IChange>(expectedChanges)
             {
-                new DefaultChange("1.0.0", "Removed", "Removed some other change", now),
-                new DefaultChange("0.1.0", "Removed", "Removed some change", yesterday)
+                new DefaultChange(new ChangeVersion("1.0.0"), "Removed", "Removed some other change", now),
+                new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "Removed some change", yesterday)
             };
             var expectedValueDictionary = ToValueDictionary(expectedChanges);
             readerMock.Setup(r => r.Values()).Returns(allChanges);
@@ -179,13 +179,13 @@ namespace Gitchanges.Tests.Generators
             };
             var readerChanges1 = new List<IChange>
             {
-                new DefaultChange("1.0.0", "Added", "Added some other change", now),
-                new DefaultChange("0.1.0", "Added", "Added some change", yesterday),
+                new DefaultChange(new ChangeVersion("1.0.0"), "Added", "Added some other change", now),
+                new DefaultChange(new ChangeVersion("0.1.0"), "Added", "Added some change", yesterday),
             };
             var readerChanges2 = new List<IChange>
             {
-                new DefaultChange("1.0.0", "Removed", "Removed some other change", now),
-                new DefaultChange("0.1.0", "Removed", "Removed some change", yesterday)
+                new DefaultChange(new ChangeVersion("1.0.0"), "Removed", "Removed some other change", now),
+                new DefaultChange(new ChangeVersion("0.1.0"), "Removed", "Removed some change", yesterday)
             };
             var expectedChanges = readerChanges1.Concat(readerChanges2).ToList();
             var expectedValueDictionary = ToValueDictionary(expectedChanges);
