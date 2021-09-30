@@ -4,6 +4,8 @@ using Gitchanges.Changes;
 using Gitchanges.Configuration;
 using Gitchanges.Readers.Parsers;
 using LibGit2Sharp;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
 using static Gitchanges.Configuration.ParseableSourceType;
@@ -13,6 +15,7 @@ namespace Gitchanges.Tests.Readers.Parsers
     [TestFixture]
     public class DefaultCommitParserTests
     {
+        private readonly ILoggerFactory _loggerFactory = NullLoggerFactory.Instance;
 
         private readonly ParsingConfig  _defaultParsingConfig = new ParsingConfig
         {
@@ -27,7 +30,7 @@ namespace Gitchanges.Tests.Readers.Parsers
             var gitTags = new Dictionary<string, string>();
             gitTags.Add("THISCOULDBEASHA", "0.0.0");
             var expectedChange = new DefaultChange(new ChangeVersion("0.0.0"), "Added", "Some Summary", DateTimeOffset.Now);
-            var parser = new DefaultCommitParser(_defaultParsingConfig, gitTags);
+            var parser = new DefaultCommitParser(_loggerFactory, _defaultParsingConfig, gitTags);
 
             var actual = parser.Parse(MockCommit(expectedChange));
             Assert.That(actual, Is.EqualTo(expectedChange));
@@ -39,7 +42,7 @@ namespace Gitchanges.Tests.Readers.Parsers
             var gitTags = new Dictionary<string, string>();
             gitTags.Add("THISCOULDBEASHA_OTHER", "0.0.0");
             var expectedChange = new DefaultChange(new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now);
-            var parser = new DefaultCommitParser(_defaultParsingConfig, gitTags);
+            var parser = new DefaultCommitParser(_loggerFactory, _defaultParsingConfig, gitTags);
 
             var actual = parser.Parse(MockCommit(expectedChange));
             Assert.That(actual, Is.EqualTo(expectedChange));
@@ -49,7 +52,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         public void VerifyParsesWithoutReference()
         {
             var expectedChange = new DefaultChange(new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now);
-            var parser = new DefaultCommitParser(_defaultParsingConfig);
+            var parser = new DefaultCommitParser(_loggerFactory, _defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange));
             Assert.That(actual, Is.EqualTo(expectedChange));
@@ -59,7 +62,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         public void VerifyParsesWithReference()
         {
             var expectedChange = new DefaultChange(new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now, "REF-1234");
-            var parser = new DefaultCommitParser(_defaultParsingConfig);
+            var parser = new DefaultCommitParser(_loggerFactory, _defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange));
             Assert.That(actual, Is.EqualTo(expectedChange));
@@ -69,7 +72,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         public void VerifyUnreleasedCommitsHaveUnreleasedVersion()
         {
             var expectedChange = new DefaultChange(new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now);
-            var parser = new DefaultCommitParser(_defaultParsingConfig);
+            var parser = new DefaultCommitParser(_loggerFactory, _defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange));
             Assert.That(actual, Is.EqualTo(expectedChange));
@@ -80,7 +83,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         {
             var releasedChange = new DefaultChange(new ChangeVersion("2.0.0"), "Added", "Some Released Summary", DateTimeOffset.Now);
             var unreleasedChange = new DefaultChange(new ChangeVersion("Unreleased"), "Added", "Some Unreleased Summary", DateTimeOffset.Now);
-            var parser = new DefaultCommitParser(_defaultParsingConfig);
+            var parser = new DefaultCommitParser(_loggerFactory, _defaultParsingConfig);
 
             parser.Parse(MockCommit(releasedChange));
             var actual = parser.Parse(MockCommit(unreleasedChange));
@@ -97,7 +100,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         {
             var explicitChange = new DefaultChange(new ChangeVersion("2.0.0"), "Added", "Some Released Summary", DateTimeOffset.Now);
             var unreleasedChange = new DefaultChange(new ChangeVersion("Unreleased"), "Added", "Some Unreleased Summary", DateTimeOffset.Now);
-            var parser = new DefaultCommitParser(_defaultParsingConfig);
+            var parser = new DefaultCommitParser(_loggerFactory, _defaultParsingConfig);
 
             parser.Parse(explicitChange);
             var actual = parser.Parse(MockCommit(unreleasedChange));

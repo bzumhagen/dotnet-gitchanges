@@ -3,6 +3,8 @@ using Gitchanges.Changes;
 using Gitchanges.Configuration;
 using Gitchanges.Readers.Parsers;
 using LibGit2Sharp;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
 using static Gitchanges.Configuration.ParseableSourceType;
@@ -12,6 +14,8 @@ namespace Gitchanges.Tests.Readers.Parsers
     [TestFixture]
     public class ProjectCommitParserTests
     {
+        private readonly ILoggerFactory _loggerFactory = NullLoggerFactory.Instance;
+        
         private readonly ParsingConfig  _defaultParsingConfig = new ParsingConfig
         {
             Reference = new ParseableProperty{ SourceType = Message, Pattern= "reference:(.*)[\n]?", IsOptional = true },
@@ -24,7 +28,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         public void VerifyParsesWithProject()
         {
             var expectedChange = new ProjectChange("MyProj", new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now);
-            var parser = new ProjectCommitParser(_defaultParsingConfig);
+            var parser = new ProjectCommitParser(_loggerFactory, _defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange, expectedChange.Project, expectedChange.Version));
             Assert.That(actual, Is.EqualTo(expectedChange));
@@ -34,7 +38,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         public void VerifyParsesWithoutProject()
         {
             var expectedChange = new ProjectChange("Unused", new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now);
-            var parser = new ProjectCommitParser(_defaultParsingConfig);
+            var parser = new ProjectCommitParser(_loggerFactory, _defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange, "", expectedChange.Version));
             Assert.That(actual, Is.Null);
@@ -44,7 +48,7 @@ namespace Gitchanges.Tests.Readers.Parsers
         public void VerifyPropagatesNullFromBase()
         {
             var expectedChange = new ProjectChange("MyProj", new ChangeVersion("Unreleased"), "Added", "Some Summary", DateTimeOffset.Now);
-            var parser = new ProjectCommitParser(_defaultParsingConfig);
+            var parser = new ProjectCommitParser(_loggerFactory, _defaultParsingConfig);
 
             var actual = parser.Parse(MockCommit(expectedChange, expectedChange.Project));
             Assert.That(actual, Is.Null);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -13,6 +14,7 @@ using Gitchanges.Readers;
 using Gitchanges.Readers.Parsers;
 using LibGit2Sharp;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Stubble.Core.Builders;
 
 namespace Gitchanges
@@ -31,6 +33,8 @@ namespace Gitchanges
             public string MinVersion { get; set; }
             [Option('r', "repository", Required = false, HelpText = "Path to repository root. Defaults to execution directory. Overrides value specified in custom settings file.")]
             public string RepositoryPath { get; set; }
+            [Option('v', "verbose", Required = false, HelpText = "Verbose messages during the run.")]
+            public bool Verbose { get; set; }
             [Option('f', "fileSource", Required = false, HelpText = "Path to file source. Overrides value specified in custom settings file.")]
             public string FileSourcePath { get; set; }
         }
@@ -61,14 +65,24 @@ namespace Gitchanges
                             additionalSettings.Add(new KeyValuePair<string, string>("Repository:Path", options.RepositoryPath));
                         
                         if (!string.IsNullOrEmpty(options.FileSourcePath))
-                            additionalSettings.Add(new KeyValuePair<string, string>("FileSource", options.FileSourcePath));
+                            additionalSettings.Add(new KeyValuePair<string, string>("FileSource", options.FileSourcePath)); 
+                        
+                        if (options.Verbose)
+                            additionalSettings.Add(new KeyValuePair<string, string>("Logging:LogLevel:Default", "Information"));
 
                         configBuilder.AddInMemoryCollection(additionalSettings);
                     });
                 
                 var config = TryOrExit(() => configBuilder.Build(), "Failed to build configuration");
                 var appConfig = config.Get<AppConfig>();
-                
+                var loggerFactory = LoggerFactory.Create(
+                    builder =>
+                    {
+                        builder.AddConfiguration(config.GetSection("Logging"));
+                        builder.AddConsole();
+                    }
+                );
+                var logger = loggerFactory.CreateLogger<Program>();
                 var template = GetTemplate(appConfig.Template);
                 var repo = TryOrExit(() => new Repository(appConfig.Repository.Path), "Failed to initialize repository");
                 var idToOverrideChange = new Dictionary<string, IChange>();
@@ -91,7 +105,7 @@ namespace Gitchanges
                         readers.Add(overrideFileReader);
                         idToProjectChange = overrideFileReader.Values().ToDictionary<OverrideProjectChange, string, ProjectChange>(change => change.Id, change => change);
                     }
-                    var parser = new ProjectCommitParser(appConfig.Parsing);
+                    var parser = new ProjectCommitParser(loggerFactory, appConfig.Parsing);
                     var gitReader = new GitReader<ProjectChange>(repo, parser, idToProjectChange);
                     readers.Add(gitReader);
                     
@@ -122,12 +136,16 @@ namespace Gitchanges
                     if (UsesTagAsSource(appConfig.Parsing))
                     {
                         commitShaToTagName = new Dictionary<string, string>();
+                        logger.LogInformation("Repository tags:");
                         foreach (var tag in repo.Tags)
                         {
-                            commitShaToTagName.Add(tag.Target.Sha, tag.FriendlyName);
+                            var sha = tag.Target.Sha;
+                            var friendlyName = tag.FriendlyName;
+                            logger.LogInformation($"Tag sha: {sha}, friendly name: {friendlyName}");
+                            commitShaToTagName.Add(sha, friendlyName);
                         }
                     }
-                    var commitParser = new DefaultCommitParser(appConfig.Parsing, commitShaToTagName);
+                    var commitParser = new DefaultCommitParser(loggerFactory, appConfig.Parsing, commitShaToTagName);
                     var gitReader = new GitReader<IChange>(repo, commitParser, idToOverrideChange);
                     readers.Add(gitReader);
                     

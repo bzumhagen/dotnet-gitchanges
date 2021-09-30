@@ -1,13 +1,14 @@
 using Gitchanges.Changes;
 using Gitchanges.Configuration;
 using LibGit2Sharp;
+using Microsoft.Extensions.Logging;
 
 namespace Gitchanges.Readers.Parsers
 {
     public class ProjectCommitParser : DefaultCommitParser
     {
         private const string Global = "Global";
-        public ProjectCommitParser(ParsingConfig parsingConfig) : base(parsingConfig)
+        public ProjectCommitParser(ILoggerFactory loggerFactory, ParsingConfig parsingConfig) : base(loggerFactory, parsingConfig)
         {
         }
 

@@ -59,12 +59,13 @@ Run the previous command with any combination of the following optional paramete
 
 |Name|Example Value|Description|
 |-------------|-------------|-------------------------|
-|settings| `someCustomAppSettings.json` | Path to custom settings file.
-|template| `someCustomTemplate.mustache` | Path to custom template file. Overrides value specified in custom settings file.
-|exclude| `Maintenance,Fixed` | Comma separated change types to exclude. Overrides value specified in custom settings file.
-|minVersion| `0.1.0` | The minimum version of the changelog, will not include changes lower than this version. Overrides value specified in custom settings file.
-|repository| `path\to\repository` | Path to repository root. Defaults to execution directory. Overrides value specified in custom settings file.
-|fileSource| `someFileSource.txt` | Path to file source. Overrides value specified in custom settings file.
+|settings| `-s someCustomAppSettings.json` | Path to custom settings file.
+|template| `-t someCustomTemplate.mustache` | Path to custom template file. Overrides value specified in custom settings file.
+|exclude| `-e Maintenance,Fixed` | Comma separated change types to exclude. Overrides value specified in custom settings file.
+|minVersion| `-m 0.1.0` | The minimum version of the changelog, will not include changes lower than this version. Overrides value specified in custom settings file.
+|repository| `-r path\to\repository` | Path to repository root. Defaults to execution directory. Overrides value specified in custom settings file.
+|fileSource| `-f someFileSource.txt` | Path to file source. Overrides value specified in custom settings file.
+|verbose| `-v` | Sets Information level for the logger. Overrides value specified in custom settings file.
 
 #### Custom App Settings
 See `dotnet-gitchanges\appsettings.json` for the default settings file. Any settings not set in your custom app settings file will default to the values in the default file.
