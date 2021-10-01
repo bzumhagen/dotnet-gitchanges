@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Gitchanges.Changes;
 using Gitchanges.Configuration;
 using LibGit2Sharp;
+using Microsoft.Extensions.Logging;
 
 namespace Gitchanges.Readers.Parsers
 {
@@ -14,9 +16,11 @@ namespace Gitchanges.Readers.Parsers
         protected readonly ParsingConfig ParsingConfig;
         protected string LastVersion = Unreleased;
         private readonly IDictionary<string, string> _commitShaToTagName;
+        private readonly ILogger<DefaultCommitParser> _logger;
         
-        public DefaultCommitParser(ParsingConfig parsingConfig, IDictionary<string, string> commitShaToTagName = null)
+        public DefaultCommitParser(ILoggerFactory loggerFactory, ParsingConfig parsingConfig, IDictionary<string, string> commitShaToTagName = null)
         {
+            _logger = loggerFactory.CreateLogger<DefaultCommitParser>();
             _commitShaToTagName = commitShaToTagName;
             ParsingConfig = parsingConfig;
         }
@@ -26,6 +30,8 @@ namespace Gitchanges.Readers.Parsers
             var reference = GetMatchOrDefault(ParsingConfig.Reference, commit);
             var changeType = GetMatchOrDefault(ParsingConfig.ChangeType, commit, Uncategorized);
             var version = GetMatchOrDefault(ParsingConfig.Version, commit, LastVersion);
+            
+            _logger.LogInformation($"commit #{commit.Id} - reference: {reference}, changeType: {changeType}, version: {version}");
 
             if (reference == null || changeType == null || version == null)
             {
