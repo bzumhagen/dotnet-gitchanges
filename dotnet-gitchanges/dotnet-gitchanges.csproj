@@ -9,7 +9,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>gitchanges</ToolCommandName>
     <AssemblyName>gitchanges</AssemblyName>
-    <TargetFrameworks>netcoreapp2.1;netcoreapp2.2</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
